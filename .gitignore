@@ -51,3 +51,8 @@ temp/
 infra/.phase-backups/
 
 packages/.phase-backups/
+
+# Local manual Electron binary/vendor downloads
+vendor/electron/
+vendor/electron*.zip
+vendor/electron-v*/

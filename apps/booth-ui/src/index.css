@@ -47,3 +47,47 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Corra white-label theme variables */
+:root {
+  --corra-primary: #EC4899;
+  --corra-secondary: #F9A8D4;
+  --corra-accent: #FACC15;
+  --corra-bg: #FFF1F7;
+  --corra-surface: #FFFFFF;
+  --corra-text: #1C1917;
+  --corra-muted: #78716C;
+  --corra-border: #FBCFE8;
+  --corra-radius: 2rem;
+  --corra-font-heading: "Playfair Display", Georgia, serif;
+  --corra-font-body: Outfit, Inter, system-ui, sans-serif;
+}
+
+body {
+  background: var(--corra-bg);
+}
+
+.corra-themed-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--corra-bg);
+}
+
+.corra-themed-background-media,
+.corra-themed-background-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.corra-themed-background-media {
+  display: block;
+}
+
+.corra-themed-background-overlay {
+  pointer-events: none;
+}

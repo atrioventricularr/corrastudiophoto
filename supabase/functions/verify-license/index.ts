@@ -11,22 +11,35 @@ type VerifyLicenseBody = {
   platform?: string;
 };
 
-type LicenseRow = {
-  id: string;
-  license_code: string;
-  owner_email: string;
-  owner_name: string | null;
-  status: string;
-  active_from: string | null;
-  active_until: string | null;
-  max_devices: number;
-  billing_cycle: string;
+type MayarLicenseDetail = {
+  licenseCode?: string;
+  status?: string;
+  expiredAt?: string | null;
+  transactionId?: string | null;
+  productId?: string | null;
+  customerId?: string | null;
+  customerName?: string | null;
+  customerEmail?: string | null;
+  activationLimit?: string | number | null;
+  useCount?: number | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 };
 
-function invalid(reason: string, status = 200): Response {
+type MayarVerifyResponse = {
+  statusCode?: number;
+  isLicenseActive?: boolean;
+  licenseCode?: MayarLicenseDetail | MayarLicenseDetail[] | null;
+  message?: string;
+  messages?: string;
+  error?: string;
+};
+
+function invalid(reason: string, status = 200, extra: Record<string, unknown> = {}): Response {
   return jsonResponse({
     valid: false,
     reason,
+    ...extra,
   }, status);
 }
 
@@ -38,22 +51,140 @@ async function parseBody(req: Request): Promise<VerifyLicenseBody> {
   }
 }
 
-function isDateActive(activeFrom: string | null, activeUntil: string | null): boolean {
-  const now = Date.now();
-
-  if (activeFrom && new Date(activeFrom).getTime() > now) {
-    return false;
-  }
-
-  if (activeUntil && new Date(activeUntil).getTime() < now) {
-    return false;
-  }
-
-  return true;
-}
-
 function normalizeInput(value: string | undefined): string {
   return (value ?? "").trim();
+}
+
+function getRequiredSecret(name: string): string {
+  const value = Deno.env.get(name);
+
+  if (!value) {
+    throw new Error(`Missing required secret: ${name}`);
+  }
+
+  return value;
+}
+
+function asMayarLicenseDetail(value: unknown): MayarLicenseDetail | null {
+  if (!value) return null;
+
+  if (Array.isArray(value)) {
+    const first = value[0];
+    if (first && typeof first === "object") {
+      return first as MayarLicenseDetail;
+    }
+    return null;
+  }
+
+  if (typeof value === "object") {
+    return value as MayarLicenseDetail;
+  }
+
+  return null;
+}
+
+function parseActiveUntil(expiredAt: string | null | undefined): string | null {
+  if (!expiredAt) return null;
+
+  const time = new Date(expiredAt).getTime();
+
+  if (Number.isNaN(time)) {
+    return null;
+  }
+
+  return new Date(time).toISOString();
+}
+
+function parseActiveFrom(createdAt: string | null | undefined): string {
+  if (!createdAt) return new Date().toISOString();
+
+  const time = new Date(createdAt).getTime();
+
+  if (Number.isNaN(time)) {
+    return new Date().toISOString();
+  }
+
+  return new Date(time).toISOString();
+}
+
+function parseActivationLimit(value: string | number | null | undefined): number {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return Math.floor(value);
+  }
+
+  const raw = String(value ?? "").trim().toLowerCase();
+
+  if (!raw) return 1;
+
+  if (
+    raw.includes("tidak terbatas") ||
+    raw.includes("unlimited") ||
+    raw.includes("infinite")
+  ) {
+    return 999999;
+  }
+
+  const numeric = Number(raw.replace(/[^0-9]/g, ""));
+
+  if (Number.isFinite(numeric) && numeric > 0) {
+    return Math.floor(numeric);
+  }
+
+  return 1;
+}
+
+async function verifyToMayar(licenseCode: string): Promise<{
+  response: MayarVerifyResponse;
+  detail: MayarLicenseDetail | null;
+}> {
+  const mayarApiKey = getRequiredSecret("MAYAR_API_KEY");
+  const productId = getRequiredSecret("MAYAR_PRODUCT_ID");
+
+  const mayarResponse = await fetch("https://api.mayar.id/software/v1/license/verify", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${mayarApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      licenseCode,
+      productId,
+    }),
+  });
+
+  const text = await mayarResponse.text();
+
+  let json: MayarVerifyResponse;
+
+  try {
+    json = JSON.parse(text) as MayarVerifyResponse;
+  } catch {
+    throw new Error(`Mayar returned non-JSON response with status ${mayarResponse.status}`);
+  }
+
+  if (!mayarResponse.ok) {
+    const message = json.message ?? json.messages ?? json.error ?? "Mayar verification failed";
+    throw new Error(`${message} (${mayarResponse.status})`);
+  }
+
+  return {
+    response: json,
+    detail: asMayarLicenseDetail(json.licenseCode),
+  };
+}
+
+function getMayarActiveStatus(response: MayarVerifyResponse, detail: MayarLicenseDetail | null): boolean {
+  if (response.isLicenseActive !== true) {
+    return false;
+  }
+
+  const status = (detail?.status ?? "").trim().toUpperCase();
+
+  if (!status) {
+    return true;
+  }
+
+  return status === "ACTIVE";
 }
 
 Deno.serve(async (req) => {
@@ -88,40 +219,87 @@ Deno.serve(async (req) => {
     return invalid("Missing deviceFingerprint", 400);
   }
 
-  const supabase = createSupabaseAdminClient();
+  let mayar: {
+    response: MayarVerifyResponse;
+    detail: MayarLicenseDetail | null;
+  };
 
-  const { data: license, error: licenseError } = await supabase
-    .from("licenses")
-    .select("id, license_code, owner_email, owner_name, status, active_from, active_until, max_devices, billing_cycle")
-    .eq("license_code", licenseCode)
-    .maybeSingle<LicenseRow>();
-
-  if (licenseError) {
+  try {
+    mayar = await verifyToMayar(licenseCode);
+  } catch (error) {
     return jsonResponse({
       valid: false,
-      reason: "License lookup failed",
-      detail: licenseError.message,
+      reason: "Mayar verification failed",
+      detail: error instanceof Error ? error.message : "Unknown Mayar verification error",
+    }, 502);
+  }
+
+  const mayarDetail = mayar.detail;
+  const isMayarActive = getMayarActiveStatus(mayar.response, mayarDetail);
+
+  if (!isMayarActive) {
+    return invalid("Mayar license is not active", 200, {
+      mayar: {
+        statusCode: mayar.response.statusCode,
+        isLicenseActive: mayar.response.isLicenseActive ?? false,
+        licenseStatus: mayarDetail?.status ?? null,
+        expiredAt: mayarDetail?.expiredAt ?? null,
+      },
+    });
+  }
+
+  const ownerEmail = mayarDetail?.customerEmail?.trim();
+
+  if (!ownerEmail) {
+    return invalid("Mayar license is active but customerEmail is missing", 502);
+  }
+
+  const activeFrom = parseActiveFrom(mayarDetail?.createdAt);
+  const activeUntil = parseActiveUntil(mayarDetail?.expiredAt);
+  const maxDevices = parseActivationLimit(mayarDetail?.activationLimit);
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: syncedLicense, error: syncLicenseError } = await supabase
+    .from("licenses")
+    .upsert({
+      license_code: licenseCode,
+      owner_email: ownerEmail,
+      owner_name: mayarDetail?.customerName ?? null,
+      status: "ACTIVE",
+      mayar_transaction_id: mayarDetail?.transactionId ?? null,
+      active_from: activeFrom,
+      active_until: activeUntil,
+      max_devices: maxDevices,
+      metadata: {
+        source: "mayar-license-verify",
+        mayarProductId: mayarDetail?.productId ?? Deno.env.get("MAYAR_PRODUCT_ID") ?? null,
+        mayarCustomerId: mayarDetail?.customerId ?? null,
+        mayarActivationLimit: mayarDetail?.activationLimit ?? null,
+        mayarUseCount: mayarDetail?.useCount ?? null,
+        mayarStatusCode: mayar.response.statusCode ?? null,
+        syncedAt: new Date().toISOString(),
+      },
+    }, {
+      onConflict: "license_code",
+    })
+    .select("id, license_code, owner_email, owner_name, status, active_from, active_until, max_devices, billing_cycle")
+    .single();
+
+  if (syncLicenseError || !syncedLicense) {
+    return jsonResponse({
+      valid: false,
+      reason: "Failed to sync Mayar license to Supabase",
+      detail: syncLicenseError?.message ?? "Unknown license sync error",
     }, 500);
-  }
-
-  if (!license) {
-    return invalid("License not found");
-  }
-
-  if (license.status !== "ACTIVE") {
-    return invalid(`License status is ${license.status}`);
-  }
-
-  if (!isDateActive(license.active_from, license.active_until)) {
-    return invalid("License is outside active date window");
   }
 
   const { data: existingDevice, error: existingDeviceError } = await supabase
     .from("booth_devices")
     .select("id")
-    .eq("license_id", license.id)
+    .eq("license_id", syncedLicense.id)
     .eq("device_fingerprint", deviceFingerprint)
-    .maybeSingle<{ id: string }>();
+    .maybeSingle();
 
   if (existingDeviceError) {
     return jsonResponse({
@@ -152,25 +330,36 @@ Deno.serve(async (req) => {
     await supabase
       .from("license_activations")
       .insert({
-        license_id: license.id,
+        license_id: syncedLicense.id,
         device_id: existingDevice.id,
         action: "VERIFIED",
         metadata: {
-          source: "verify-license",
+          source: "verify-license-mayar",
+          mayarProductId: mayarDetail?.productId ?? null,
         },
       });
 
     return jsonResponse({
       valid: true,
+      source: "mayar",
       license: {
-        id: license.id,
-        licenseCode: license.license_code,
-        ownerEmail: license.owner_email,
-        ownerName: license.owner_name,
-        billingCycle: license.billing_cycle,
-        activeFrom: license.active_from,
-        activeUntil: license.active_until,
-        maxDevices: license.max_devices,
+        id: syncedLicense.id,
+        licenseCode: syncedLicense.license_code,
+        ownerEmail: syncedLicense.owner_email,
+        ownerName: syncedLicense.owner_name,
+        billingCycle: syncedLicense.billing_cycle,
+        activeFrom: syncedLicense.active_from,
+        activeUntil: syncedLicense.active_until,
+        maxDevices: syncedLicense.max_devices,
+      },
+      mayar: {
+        isLicenseActive: mayar.response.isLicenseActive ?? true,
+        status: mayarDetail?.status ?? null,
+        expiredAt: mayarDetail?.expiredAt ?? null,
+        transactionId: mayarDetail?.transactionId ?? null,
+        productId: mayarDetail?.productId ?? null,
+        activationLimit: mayarDetail?.activationLimit ?? null,
+        useCount: mayarDetail?.useCount ?? null,
       },
       device: {
         id: existingDevice.id,
@@ -185,7 +374,7 @@ Deno.serve(async (req) => {
       count: "exact",
       head: true,
     })
-    .eq("license_id", license.id);
+    .eq("license_id", syncedLicense.id);
 
   if (countError) {
     return jsonResponse({
@@ -195,21 +384,25 @@ Deno.serve(async (req) => {
     }, 500);
   }
 
-  if ((count ?? 0) >= license.max_devices) {
+  if ((count ?? 0) >= syncedLicense.max_devices) {
     await supabase
       .from("license_activations")
       .insert({
-        license_id: license.id,
+        license_id: syncedLicense.id,
         action: "DEVICE_LIMIT_REACHED",
         metadata: {
-          source: "verify-license",
+          source: "verify-license-mayar",
           deviceFingerprint,
           deviceName,
           platform,
+          mayarActivationLimit: mayarDetail?.activationLimit ?? null,
         },
       });
 
-    return invalid("Device limit reached");
+    return invalid("Device limit reached", 200, {
+      maxDevices: syncedLicense.max_devices,
+      currentDevices: count ?? 0,
+    });
   }
 
   const deviceId = `device_${crypto.randomUUID()}`;
@@ -218,17 +411,18 @@ Deno.serve(async (req) => {
     .from("booth_devices")
     .insert({
       id: deviceId,
-      license_id: license.id,
+      license_id: syncedLicense.id,
       device_fingerprint: deviceFingerprint,
       device_name: deviceName,
       platform,
       last_seen_at: new Date().toISOString(),
       metadata: {
-        source: "verify-license",
+        source: "verify-license-mayar",
+        mayarProductId: mayarDetail?.productId ?? null,
       },
     })
     .select("id")
-    .single<{ id: string }>();
+    .single();
 
   if (createDeviceError || !createdDevice) {
     return jsonResponse({
@@ -241,25 +435,36 @@ Deno.serve(async (req) => {
   await supabase
     .from("license_activations")
     .insert({
-      license_id: license.id,
+      license_id: syncedLicense.id,
       device_id: createdDevice.id,
       action: "ACTIVATED",
       metadata: {
-        source: "verify-license",
+        source: "verify-license-mayar",
+        mayarProductId: mayarDetail?.productId ?? null,
       },
     });
 
   return jsonResponse({
     valid: true,
+    source: "mayar",
     license: {
-      id: license.id,
-      licenseCode: license.license_code,
-      ownerEmail: license.owner_email,
-      ownerName: license.owner_name,
-      billingCycle: license.billing_cycle,
-      activeFrom: license.active_from,
-      activeUntil: license.active_until,
-      maxDevices: license.max_devices,
+      id: syncedLicense.id,
+      licenseCode: syncedLicense.license_code,
+      ownerEmail: syncedLicense.owner_email,
+      ownerName: syncedLicense.owner_name,
+      billingCycle: syncedLicense.billing_cycle,
+      activeFrom: syncedLicense.active_from,
+      activeUntil: syncedLicense.active_until,
+      maxDevices: syncedLicense.max_devices,
+    },
+    mayar: {
+      isLicenseActive: mayar.response.isLicenseActive ?? true,
+      status: mayarDetail?.status ?? null,
+      expiredAt: mayarDetail?.expiredAt ?? null,
+      transactionId: mayarDetail?.transactionId ?? null,
+      productId: mayarDetail?.productId ?? null,
+      activationLimit: mayarDetail?.activationLimit ?? null,
+      useCount: mayarDetail?.useCount ?? null,
     },
     device: {
       id: createdDevice.id,

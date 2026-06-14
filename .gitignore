@@ -47,3 +47,7 @@ tmp/
 temp/
 .local-media/
 
+
+infra/.phase-backups/
+
+packages/.phase-backups/

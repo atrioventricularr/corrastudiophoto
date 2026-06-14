@@ -97,19 +97,19 @@ importers:
   apps/desktop-electron:
     devDependencies:
       '@types/node':
-        specifier: ^22.10.2
+        specifier: ^22.19.21
         version: 22.19.21
       concurrently:
-        specifier: ^9.1.0
+        specifier: ^9.2.1
         version: 9.2.1
       electron:
-        specifier: ^33.2.1
+        specifier: ^33.4.11
         version: 33.4.11
       typescript:
-        specifier: ^5.7.2
+        specifier: ^5.9.3
         version: 5.9.3
       wait-on:
-        specifier: ^8.0.1
+        specifier: ^8.0.5
         version: 8.0.5
 
   apps/download-page:

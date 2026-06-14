@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DEFAULT_LAYOUTS, DEFAULT_TEMPLATES, INITIAL_ADMIN_SETTINGS } from './constants';
 import { LayoutType, FrameTemplate, AdminSettings, ApplicationScreen } from './types';
 import { playRetroBeep } from './utils/audio';
+import { isCorraDesktop, readDesktopLicenseCache, type CorraVerifyLicenseResult } from './lib/desktop-api';
 
 // Visual Screen Components
 import WindowsOuterFrame from './components/WindowsOuterFrame';
@@ -13,11 +14,14 @@ import CameraCaptureScreen from './components/CameraCaptureScreen';
 import ProcessingScreen from './components/ProcessingScreen';
 import ResultScreen from './components/ResultScreen';
 import AdminPanel from './components/AdminPanel';
+import LicenseActivationScreen from './components/LicenseActivationScreen';
 
 export default function App() {
   // Navigation active screen
   const [activeScreen, setActiveScreen] = useState<ApplicationScreen>('welcome');
   const [isAdminActive, setIsAdminActive] = useState<boolean>(false);
+  const [isLicenseReady, setIsLicenseReady] = useState<boolean>(false);
+  const [licenseSummary, setLicenseSummary] = useState<string>('');
   
   // Localized dictionaries state
   const [lang, setLang] = useState<'ID' | 'EN' | 'JP'>('ID');
@@ -48,13 +52,63 @@ export default function App() {
     addLog('[IO System] Waiting for touch sensor command event.');
   }, []);
 
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function checkLicenseCache() {
+      if (!isCorraDesktop()) {
+        setIsLicenseReady(true);
+        setLicenseSummary('Browser preview mode');
+        addLog('[LICENSE] Browser preview mode detected. License gate bypassed for development.');
+        return;
+      }
+
+      const cache = await readDesktopLicenseCache();
+
+      if (isCancelled) {
+        return;
+      }
+
+      if (cache?.valid === true) {
+        setIsLicenseReady(true);
+        setLicenseSummary(cache.license?.licenseCode || 'ACTIVE LICENSE');
+        addLog('[LICENSE] Cached license accepted. Device already activated.');
+        setActiveScreen('welcome');
+      } else {
+        setIsLicenseReady(false);
+        setLicenseSummary('');
+        addLog('[LICENSE] No valid local license cache. Activation required.');
+        setActiveScreen('license_activation');
+      }
+    }
+
+    checkLicenseCache();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
   // Sync log whenever user changes language
   const handleLanguageChanged = (newLang: 'ID' | 'EN' | 'JP') => {
     setLang(newLang);
     addLog(`[ACTION] Language translation altered: ${newLang}`);
   };
 
+  const handleLicenseActivated = (result: CorraVerifyLicenseResult) => {
+    setIsLicenseReady(true);
+    setLicenseSummary(result.license?.licenseCode || result.source || 'ACTIVE LICENSE');
+    addLog('[LICENSE] License activated successfully. Customer loop unlocked.');
+    setActiveScreen('welcome');
+  };
+
   const handleStartSession = () => {
+    if (isCorraDesktop() && !isLicenseReady) {
+      addLog('[LICENSE] Start blocked. License activation required.');
+      setActiveScreen('license_activation');
+      return;
+    }
+
     addLog('[ACTION] Touched START button. Sesi initialized.');
     addLog(`[SYSTEM] Cost per print set at Rp ${adminSettings.pricingIDR.toLocaleString('id-ID')}`);
     setActiveScreen('payment');
@@ -148,6 +202,12 @@ export default function App() {
       isAdminActive={isAdminActive}
     >
       {/* Screen Render routers */}
+      {activeScreen === 'license_activation' && (
+        <LicenseActivationScreen
+          onLicenseActivated={handleLicenseActivated}
+        />
+      )}
+
       {activeScreen === 'welcome' && (
         <WelcomeScreen 
           onStart={handleStartSession} 

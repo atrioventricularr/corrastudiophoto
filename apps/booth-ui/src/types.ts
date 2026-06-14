@@ -43,4 +43,4 @@ export interface PhotoCapture {
   timestamp: string;
 }
 
-export type ApplicationScreen = 'welcome' | 'payment' | 'layout_select' | 'template_select' | 'camera_capture' | 'processing' | 'result' | 'admin';
+export type ApplicationScreen = 'license_activation' | 'welcome' | 'payment' | 'layout_select' | 'template_select' | 'camera_capture' | 'processing' | 'result' | 'admin';

@@ -105,6 +105,13 @@ export default function App() {
   };
 
 
+  const handleAdminLoginCancel = () => {
+    setIsAdminAuthenticated(false);
+    setIsAdminActive(false);
+    setActiveScreen('welcome');
+    addLog('[ADMIN] Admin login cancelled.');
+  };
+
   const handleAdminLoginSuccess = () => {
     setIsAdminAuthenticated(true);
   };
@@ -211,10 +218,7 @@ export default function App() {
       {isAdminActive && !isAdminAuthenticated && (
         <AdminLoginScreen
           onLoginSuccess={handleAdminLoginSuccess}
-          onCancel={() => {
-            setIsAdminActive(false);
-            setIsAdminAuthenticated(false);
-          }}
+          onCancel={handleAdminLoginCancel}
         />
       )}
 
@@ -222,10 +226,7 @@ export default function App() {
       {isAdminActive && !isAdminAuthenticated && (
         <AdminLoginScreen
           onLoginSuccess={handleAdminLoginSuccess}
-          onCancel={() => {
-            setIsAdminActive(false);
-            setIsAdminAuthenticated(false);
-          }}
+          onCancel={handleAdminLoginCancel}
         />
       )}
 

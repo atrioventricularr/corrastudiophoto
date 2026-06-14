@@ -9,4 +9,7 @@ contextBridge.exposeInMainWorld("corraDesktop", {
     readCache: () => ipcRenderer.invoke("corra:license-read-cache"),
     clearCache: () => ipcRenderer.invoke("corra:license-clear-cache"),
   },
+  assets: {
+    pickBackground: () => ipcRenderer.invoke("corra:asset-pick-background"),
+  },
 });

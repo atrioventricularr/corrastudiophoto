@@ -18,6 +18,7 @@ import { motion } from 'motion/react';
 import { AdminSettings, FrameTemplate } from '../types';
 import { playRetroBeep } from '../utils/audio';
 import BrandAppearancePanel from './admin/BrandAppearancePanel';
+import AdminCredentialPanel from './admin/AdminCredentialPanel';
 
 interface AdminPanelProps {
   settings: AdminSettings;
@@ -141,6 +142,9 @@ export default function AdminPanel({
       {/* White-label brand/theme/background settings */}
       <div className="mt-6">
         <BrandAppearancePanel />
+        <div className="mt-6">
+          <AdminCredentialPanel />
+        </div>
       </div>
 
       {/* Main double column form container */}

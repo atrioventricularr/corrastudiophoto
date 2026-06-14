@@ -98,3 +98,34 @@ body {
   z-index: 1;
   min-height: 100vh;
 }
+
+/* Corra theme typography + global token usage */
+html,
+body,
+#root {
+  font-family: var(--corra-font-body);
+  color: var(--corra-text);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--corra-font-body);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-serif,
+.font-display,
+.corra-heading {
+  font-family: var(--corra-font-heading);
+}
+
+.corra-body {
+  font-family: var(--corra-font-body);
+}

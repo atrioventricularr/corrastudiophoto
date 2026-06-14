@@ -1,13 +1,27 @@
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, dialog, protocol, net } = require("electron");
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 
 const DEFAULT_VERIFY_LICENSE_URL =
   "https://uitnzrstkjvwiojbnpwg.supabase.co/functions/v1/verify-license";
 
 let mainWindow = null;
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "corra-asset",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      stream: true,
+    },
+  },
+]);
 
 function findRepoRoot(startDir) {
   let current = startDir;
@@ -225,6 +239,143 @@ function clearLicenseCache() {
   };
 }
 
+
+function ensureDirectory(directoryPath) {
+  fs.mkdirSync(directoryPath, {
+    recursive: true,
+  });
+}
+
+function getBrandAssetsRoot() {
+  return path.join(app.getPath("userData"), "brand-assets");
+}
+
+function getAssetDirectory(kind) {
+  return path.join(getBrandAssetsRoot(), kind);
+}
+
+function getAssetUrl(kind, filename) {
+  return `corra-asset://${kind}/${encodeURIComponent(filename)}`;
+}
+
+function sanitizeAssetFilename(filename) {
+  const ext = path.extname(filename).toLowerCase();
+  const base = path
+    .basename(filename, ext)
+    .replace(/[^a-zA-Z0-9-_]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "background";
+
+  return `${Date.now()}-${base}${ext}`;
+}
+
+function getBackgroundTypeFromExtension(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+
+  if (ext === ".mp4") {
+    return "video";
+  }
+
+  return "image";
+}
+
+function isSupportedBackgroundExtension(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+
+  return [".png", ".jpg", ".jpeg", ".webp", ".mp4"].includes(ext);
+}
+
+function registerAssetProtocol() {
+  protocol.handle("corra-asset", async (request) => {
+    try {
+      const url = new URL(request.url);
+      const kind = url.hostname;
+      const filename = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+
+      if (!kind || !filename) {
+        return new Response("Not found", {
+          status: 404,
+        });
+      }
+
+      const assetRoot = path.normalize(getAssetDirectory(kind));
+      const filePath = path.normalize(path.join(assetRoot, filename));
+
+      if (!filePath.startsWith(assetRoot)) {
+        return new Response("Forbidden", {
+          status: 403,
+        });
+      }
+
+      if (!fs.existsSync(filePath)) {
+        return new Response("Not found", {
+          status: 404,
+        });
+      }
+
+      return net.fetch(pathToFileURL(filePath).toString());
+    } catch (error) {
+      return new Response(error instanceof Error ? error.message : "Asset protocol error", {
+        status: 500,
+      });
+    }
+  });
+}
+
+async function pickBackgroundAsset() {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: "Choose Corra Booth Background",
+    properties: ["openFile"],
+    filters: [
+      {
+        name: "Background Assets",
+        extensions: ["png", "jpg", "jpeg", "webp", "mp4"],
+      },
+      {
+        name: "Images",
+        extensions: ["png", "jpg", "jpeg", "webp"],
+      },
+      {
+        name: "Videos",
+        extensions: ["mp4"],
+      },
+    ],
+  });
+
+  if (result.canceled || !result.filePaths.length) {
+    return {
+      cancelled: true,
+    };
+  }
+
+  const sourcePath = result.filePaths[0];
+
+  if (!isSupportedBackgroundExtension(sourcePath)) {
+    return {
+      cancelled: true,
+      error: "Unsupported background file. Use PNG, JPG, WebP, or MP4.",
+    };
+  }
+
+  const kind = "backgrounds";
+  const targetDirectory = getAssetDirectory(kind);
+  ensureDirectory(targetDirectory);
+
+  const filename = sanitizeAssetFilename(sourcePath);
+  const targetPath = path.join(targetDirectory, filename);
+
+  fs.copyFileSync(sourcePath, targetPath);
+
+  return {
+    cancelled: false,
+    sourcePath,
+    targetPath,
+    filename,
+    url: getAssetUrl(kind, filename),
+    backgroundType: getBackgroundTypeFromExtension(sourcePath),
+  };
+}
+
 function registerIpcHandlers() {
   ipcMain.handle("corra:device-info", async () => {
     return getDeviceInfo();
@@ -247,6 +398,17 @@ function registerIpcHandlers() {
 
   ipcMain.handle("corra:license-clear-cache", async () => {
     return clearLicenseCache();
+  });
+
+  ipcMain.handle("corra:asset-pick-background", async () => {
+    try {
+      return await pickBackgroundAsset();
+    } catch (error) {
+      return {
+        cancelled: true,
+        error: error instanceof Error ? error.message : "Unknown asset picker error",
+      };
+    }
   });
 }
 
@@ -290,6 +452,7 @@ function createWindow() {
 loadEnvironment();
 
 app.whenReady().then(() => {
+  registerAssetProtocol();
   registerIpcHandlers();
   createWindow();
 

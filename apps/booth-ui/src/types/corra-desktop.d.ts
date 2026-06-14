@@ -4,7 +4,7 @@ declare global {
   type CorraDesktopDeviceInfo = {
     fingerprint: string;
     deviceName: string;
-    platform: "WINDOWS_ELECTRON";
+    platform: 'WINDOWS_ELECTRON';
     osPlatform: string;
     osRelease: string;
     arch: string;
@@ -37,6 +37,16 @@ declare global {
     raw?: string;
   };
 
+  type CorraPickedBackgroundAsset = {
+    cancelled: boolean;
+    error?: string;
+    sourcePath?: string;
+    targetPath?: string;
+    filename?: string;
+    url?: string;
+    backgroundType?: 'image' | 'video';
+  };
+
   interface Window {
     corraDesktop?: {
       device: {
@@ -49,6 +59,9 @@ declare global {
         }) => Promise<CorraVerifyLicenseResult>;
         readCache: () => Promise<CorraVerifyLicenseResult | null>;
         clearCache: () => Promise<{ ok: boolean }>;
+      };
+      assets: {
+        pickBackground: () => Promise<CorraPickedBackgroundAsset>;
       };
     };
   }

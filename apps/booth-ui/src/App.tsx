@@ -14,12 +14,14 @@ import CameraCaptureScreen from './components/CameraCaptureScreen';
 import ProcessingScreen from './components/ProcessingScreen';
 import ResultScreen from './components/ResultScreen';
 import AdminPanel from './components/AdminPanel';
+import AdminLoginScreen from './components/AdminLoginScreen';
 import LicenseActivationScreen from './components/LicenseActivationScreen';
 
 export default function App() {
   // Navigation active screen
   const [activeScreen, setActiveScreen] = useState<ApplicationScreen>('welcome');
   const [isAdminActive, setIsAdminActive] = useState<boolean>(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [isLicenseReady, setIsLicenseReady] = useState<boolean>(false);
   const [licenseSummary, setLicenseSummary] = useState<string>('');
   
@@ -100,6 +102,11 @@ export default function App() {
     setLicenseSummary(result.license?.licenseCode || result.source || 'ACTIVE LICENSE');
     addLog('[LICENSE] License activated successfully. Customer loop unlocked.');
     setActiveScreen('welcome');
+  };
+
+
+  const handleAdminLoginSuccess = () => {
+    setIsAdminAuthenticated(true);
   };
 
   const handleStartSession = () => {
@@ -201,6 +208,27 @@ export default function App() {
       onToggleAdmin={handleToggleAdmin}
       isAdminActive={isAdminActive}
     >
+      {isAdminActive && !isAdminAuthenticated && (
+        <AdminLoginScreen
+          onLoginSuccess={handleAdminLoginSuccess}
+          onCancel={() => {
+            setIsAdminActive(false);
+            setIsAdminAuthenticated(false);
+          }}
+        />
+      )}
+
+      {/* ADMIN_LOGIN_GATE_HARD_FIX */}
+      {isAdminActive && !isAdminAuthenticated && (
+        <AdminLoginScreen
+          onLoginSuccess={handleAdminLoginSuccess}
+          onCancel={() => {
+            setIsAdminActive(false);
+            setIsAdminAuthenticated(false);
+          }}
+        />
+      )}
+
       {/* Screen Render routers */}
       {activeScreen === 'license_activation' && (
         <LicenseActivationScreen

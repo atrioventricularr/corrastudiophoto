@@ -414,3 +414,6 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 
 [functions.verify-license]
 verify_jwt = false
+
+[functions.mayar-webhook]
+verify_jwt = false

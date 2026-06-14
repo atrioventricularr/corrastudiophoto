@@ -1,0 +1,4 @@
+[build]
+  command = "pnpm --filter @corra/admin-web build"
+  publish = "apps/admin-web/dist"
+

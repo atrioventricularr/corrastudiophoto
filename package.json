@@ -1,0 +1,24 @@
+{
+  "name": "corra-booth",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Corra Booth - Commercial Windows Desktop Photobooth Software",
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev:ui": "pnpm --filter @corra/booth-ui dev",
+    "dev:desktop": "pnpm --filter @corra/desktop-electron dev",
+    "dev:admin": "pnpm --filter @corra/admin-web dev",
+    "dev:download": "pnpm --filter @corra/download-page dev",
+    "dev:landing": "pnpm --filter @corra/landing-page dev",
+    "build": "pnpm -r build",
+    "build:ui": "pnpm --filter @corra/booth-ui build",
+    "build:desktop": "pnpm --filter @corra/desktop-electron build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,4 @@
+[build]
+  command = "pnpm --filter @corra/download-page build"
+  publish = "apps/download-page/dist"
+

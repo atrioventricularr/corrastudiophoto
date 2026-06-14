@@ -1,0 +1,21 @@
+{
+  "name": "@corra/data-access",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo \"lint data-access\"",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@corra/shared": "workspace:*",
+    "@supabase/supabase-js": "^2.47.10"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

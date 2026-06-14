@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+out/
+release/
+.turbo/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Electron
+apps/desktop-electron/dist/
+apps/desktop-electron/release/
+
+# Supabase
+.supabase/
+
+# Local database/cache
+*.sqlite
+*.sqlite3
+*.db
+
+# Temporary media
+tmp/
+temp/
+.local-media/
+

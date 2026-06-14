@@ -1,0 +1,15 @@
+appId: com.corrabooth.desktop
+productName: Corra Booth
+directories:
+  output: release
+files:
+  - dist/**
+  - resources/**
+win:
+  target:
+    - nsis
+  icon: resources/app-icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+

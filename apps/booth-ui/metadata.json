@@ -1,0 +1,6 @@
+{
+  "name": "Self-Service Photobooth UI",
+  "description": "Interactive simulator of a modular Flutter Desktop self-service photobooth application with retro 2000s Japanese themes, immersive capture stream, photo strip layouts, printable results, and administrator console.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

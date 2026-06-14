@@ -1,0 +1,24 @@
+{
+  "name": "@corra/desktop-electron",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "dev": "echo \"Electron dev will be configured in Phase 4\"",
+    "build": "echo \"Electron build will be configured in Phase 4\"",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo \"lint desktop-electron\"",
+    "clean": "rm -rf dist release"
+  },
+  "dependencies": {
+    "@corra/booth-core": "workspace:*",
+    "@corra/data-access": "workspace:*",
+    "@corra/shared": "workspace:*",
+    "electron": "^33.2.1"
+  },
+  "devDependencies": {
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.2"
+  }
+}

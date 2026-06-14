@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, Camera, Heart, Play, Award } from 'lucide-react';
 import { playRetroBeep } from '../utils/audio';
+import { useBrandTheme } from '../branding';
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -37,6 +38,7 @@ const DICTIONARY = {
 
 export default function WelcomeScreen({ onStart, lang, setLang }: WelcomeScreenProps) {
   const dict = DICTIONARY[lang];
+  const { brandConfig } = useBrandTheme();
 
   const handleStartClicked = () => {
     playRetroBeep('success');
@@ -47,7 +49,7 @@ export default function WelcomeScreen({ onStart, lang, setLang }: WelcomeScreenP
     <div className="flex-1 w-full bg-transparent relative flex flex-col justify-between p-6 sm:p-10 select-none overflow-hidden">
       
       {/* Dynamic year 2000s Japanese Moving Marquee/Banner at top */}
-      <div className="w-full bg-[#FFF1F2] border-y border-[#FFB7C5]/30 py-2 overflow-hidden rotate-[-0.5deg] translate-y-1 shrink-0">
+      <div className="w-full bg-[#FFF1F2] border-y border-[var(--corra-border)] py-2 overflow-hidden rotate-[-0.5deg] translate-y-1 shrink-0">
         <div className="whitespace-nowrap flex animate-marquee font-display font-medium text-xs text-[#E11D48] tracking-widest uppercase">
           <div className="flex gap-16">
             <span>✧ プリクラ CLUB DEBUT 2000s ✧</span>
@@ -75,18 +77,20 @@ export default function WelcomeScreen({ onStart, lang, setLang }: WelcomeScreenP
           {/* Momo Brand Header decoration block */}
           <div className="flex items-center gap-4 mb-6">
             <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center border border-[#F2E8DF] shrink-0">
-              <div className="w-5 h-5 rounded-full bg-[#FFB7C5] ring-4 ring-[#FFB7C5]/20 animate-pulse"></div>
+              <div className="w-5 h-5 rounded-full bg-[var(--corra-primary)] ring-4 ring-[#FFB7C5]/20 animate-pulse"></div>
             </div>
             <div className="text-left">
-              <h1 className="text-2xl sm:text-3xl font-display font-black text-[#2D2D2D] tracking-tight">
-                MOMO PHOTO <span className="text-[#FFB7C5] text-lg sm:text-xl font-medium">モモフォト</span>
+              <h1 className="text-2xl sm:text-3xl font-display font-black text-[var(--corra-text)] tracking-tight">
+                {brandConfig.businessName}
               </h1>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[#A0A0A0] font-bold">Y2K Self-Service Studio • Est. 2004</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--corra-muted)] font-bold">
+                {brandConfig.tagline || 'Self-Service Photo Booth'}
+              </p>
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#FEF2F4] border border-[#FDA4AF]/35 text-rose-500 text-xs font-outfit font-bold tracking-wider mb-4">
-            <Sparkles className="w-4 h-4 fill-rose-500 text-rose-500 animate-spin" style={{ animationDuration: '4s' }} />
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#FEF2F4] border border-[var(--corra-border)] text-[var(--corra-primary)] text-xs font-outfit font-bold tracking-wider mb-4">
+            <Sparkles className="w-4 h-4 fill-[var(--corra-primary)] text-[var(--corra-primary)] animate-spin" style={{ animationDuration: '4s' }} />
             <span>2000s JP PURIKURA EXPERIENCE</span>
           </div>
 
@@ -94,8 +98,8 @@ export default function WelcomeScreen({ onStart, lang, setLang }: WelcomeScreenP
             {dict.greeting}
           </h2>
           
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif italic font-light text-[#2D2D2D] tracking-tight leading-none mt-1">
-            Momo Selfie Club ♡
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif italic font-light text-[var(--corra-text)] tracking-tight leading-none mt-1">
+            {brandConfig.businessName}
           </h1>
           
           <p className="font-outfit text-stone-600 mt-3 text-sm sm:text-base leading-relaxed font-light">
@@ -110,7 +114,7 @@ export default function WelcomeScreen({ onStart, lang, setLang }: WelcomeScreenP
                 className="bg-white border border-[#F2E8DF] px-3.5 py-2.5 rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.02)] hover:border-[#FFB7C5] transition-all flex items-center gap-2"
               >
                 <div className="w-5 h-5 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
-                  <Heart className="w-3.5 h-3.5 text-[#FFB7C5] fill-[#FFB7C5]" />
+                  <Heart className="w-3.5 h-3.5 text-[var(--corra-primary)] fill-[var(--corra-primary)]" />
                 </div>
                 <span className="font-outfit text-[11px] font-bold text-stone-700 tracking-tight leading-tight">
                   {feat}
@@ -131,22 +135,22 @@ export default function WelcomeScreen({ onStart, lang, setLang }: WelcomeScreenP
           <div className="bg-white p-6 rounded-[32px] shadow-[0_20px_50px_-15px_rgba(255,183,197,0.25)] border border-[#F2E8DF] w-full flex flex-col items-center relative">
             
             {/* Elegant ribbon tag */}
-            <div className="absolute -top-3 bg-[#FFB7C5] text-white px-4 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase shadow-sm">
-              Sweet Studio
+            <div className="absolute -top-3 bg-[var(--corra-primary)] text-white px-4 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase shadow-sm">
+              {brandConfig.businessName}
             </div>
 
             {/* Simulated Live Cam Stamp Bubble */}
-            <div className="w-full aspect-[4/3] rounded-[24px] bg-[#FDF2F4] border border-[#FFB7C5]/30 relative overflow-hidden flex items-center justify-center p-3">
+            <div className="w-full aspect-[4/3] rounded-[24px] bg-[#FDF2F4] border border-[var(--corra-border)] relative overflow-hidden flex items-center justify-center p-3">
               <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5 z-20">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                <span className="font-mono text-[9px] font-bold text-rose-500">LIVE PREVIEW</span>
+                <span className="font-mono text-[9px] font-bold text-[var(--corra-primary)]">LIVE PREVIEW</span>
               </div>
 
               {/* Looping camera avatar artwork inside frame */}
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center border-2 border-[#FDA4AF] mb-3 relative animate-pulse">
-                  <Camera className="w-7 h-7 text-rose-500" />
+                  <Camera className="w-7 h-7 text-[var(--corra-primary)]" />
                   <Heart className="absolute bottom-0 right-0 w-5 h-5 text-indigo-400 fill-indigo-400" />
                 </div>
                 <span className="font-outfit text-xs font-semibold text-[#8C3C43] tracking-wide uppercase">
@@ -162,7 +166,7 @@ export default function WelcomeScreen({ onStart, lang, setLang }: WelcomeScreenP
             <button 
               id="btn-big-start-kiosk"
               onClick={handleStartClicked}
-              className="w-full mt-6 bg-[#2D2D2D] hover:bg-[#FFB7C5] hover:text-stone-900 text-white font-outfit py-4.5 rounded-3xl transition-all shadow-[0_10px_25px_rgba(45,45,45,0.25)] hover:shadow-[0_10px_25px_rgba(255,183,197,0.4)] hover:scale-[1.02] cursor-pointer font-bold tracking-widest text-center text-xs sm:text-sm uppercase relative overflow-hidden group"
+              className="w-full mt-6 bg-[#2D2D2D] hover:bg-[var(--corra-primary)] hover:text-stone-900 text-white font-outfit py-4.5 rounded-3xl transition-all shadow-[0_10px_25px_rgba(45,45,45,0.25)] hover:shadow-[0_10px_25px_rgba(255,183,197,0.4)] hover:scale-[1.02] cursor-pointer font-bold tracking-widest text-center text-xs sm:text-sm uppercase relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-white/10 translate-y-[-100%] group-hover:translate-y-[0%] transition-transform duration-300"></div>
               <div className="flex items-center justify-center gap-2">
@@ -191,21 +195,21 @@ export default function WelcomeScreen({ onStart, lang, setLang }: WelcomeScreenP
           <button 
             id="toggle-lang-id"
             onClick={() => { playRetroBeep('click'); setLang('ID'); }} 
-            className={`px-3 py-1.5 rounded-xl font-outfit text-xs font-bold transition-all cursor-pointer ${lang === 'ID' ? 'bg-[#FFB7C5] text-stone-950 shadow-sm' : 'text-stone-500 hover:text-stone-900'}`}
+            className={`px-3 py-1.5 rounded-xl font-outfit text-xs font-bold transition-all cursor-pointer ${lang === 'ID' ? 'bg-[var(--corra-primary)] text-stone-950 shadow-sm' : 'text-stone-500 hover:text-stone-900'}`}
           >
             Bahasa ID
           </button>
           <button 
             id="toggle-lang-en"
             onClick={() => { playRetroBeep('click'); setLang('EN'); }} 
-            className={`px-3 py-1.5 rounded-xl font-outfit text-xs font-bold transition-all cursor-pointer ${lang === 'EN' ? 'bg-[#FFB7C5] text-stone-950 shadow-sm' : 'text-stone-500 hover:text-stone-900'}`}
+            className={`px-3 py-1.5 rounded-xl font-outfit text-xs font-bold transition-all cursor-pointer ${lang === 'EN' ? 'bg-[var(--corra-primary)] text-stone-950 shadow-sm' : 'text-stone-500 hover:text-stone-900'}`}
           >
             English
           </button>
           <button 
             id="toggle-lang-jp"
             onClick={() => { playRetroBeep('click'); setLang('JP'); }} 
-            className={`px-3 py-1.5 rounded-xl font-outfit text-xs font-bold transition-all cursor-pointer ${lang === 'JP' ? 'bg-[#FFB7C5] text-stone-950 shadow-sm' : 'text-stone-500 hover:text-stone-900'}`}
+            className={`px-3 py-1.5 rounded-xl font-outfit text-xs font-bold transition-all cursor-pointer ${lang === 'JP' ? 'bg-[var(--corra-primary)] text-stone-950 shadow-sm' : 'text-stone-500 hover:text-stone-900'}`}
           >
             日本語
           </button>

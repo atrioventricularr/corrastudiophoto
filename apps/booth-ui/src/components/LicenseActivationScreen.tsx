@@ -17,6 +17,7 @@ import {
   type CorraDesktopDeviceInfo,
   type CorraVerifyLicenseResult,
 } from '../lib/desktop-api';
+import { useBrandTheme } from '../branding';
 
 interface LicenseActivationScreenProps {
   onLicenseActivated: (result: CorraVerifyLicenseResult) => void;
@@ -32,6 +33,7 @@ export default function LicenseActivationScreen({
   const [isCheckingCache, setIsCheckingCache] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const { brandConfig } = useBrandTheme();
 
   const desktopMode = useMemo(() => isCorraDesktop(), []);
 
@@ -157,7 +159,7 @@ export default function LicenseActivationScreen({
             </div>
 
             <h1 className="font-serif italic text-4xl sm:text-5xl text-stone-900 leading-tight">
-              Aktivasi Corra Booth
+              Aktivasi {brandConfig.businessName}
             </h1>
 
             <p className="mt-4 text-stone-600 font-outfit leading-relaxed max-w-xl">
@@ -306,7 +308,7 @@ export default function LicenseActivationScreen({
                     Aktivasi berhasil
                   </p>
                   <p className="text-emerald-700 text-xs mt-1 leading-relaxed">
-                    Device ini sudah siap menjalankan Corra Booth.
+                    Device ini sudah siap menjalankan {brandConfig.businessName}.
                   </p>
                 </div>
               </div>

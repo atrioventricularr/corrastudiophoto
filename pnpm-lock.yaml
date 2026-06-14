@@ -163,6 +163,9 @@ importers:
 
   packages/data-access:
     dependencies:
+      '@corra/booth-core':
+        specifier: workspace:*
+        version: link:../booth-core
       '@corra/shared':
         specifier: workspace:*
         version: link:../shared
@@ -176,6 +179,9 @@ importers:
 
   packages/image-engine:
     dependencies:
+      '@corra/booth-core':
+        specifier: workspace:*
+        version: link:../booth-core
       '@corra/shared':
         specifier: workspace:*
         version: link:../shared

@@ -8,10 +8,11 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc --noEmit",
-    "lint": "echo \"lint data-access\"",
+    "lint": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@corra/booth-core": "workspace:*",
     "@corra/shared": "workspace:*",
     "@supabase/supabase-js": "^2.47.10"
   },

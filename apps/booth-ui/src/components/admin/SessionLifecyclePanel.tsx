@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { useSessionLifecycle } from '../../sessions';
+import {
+  exportSessionEventsCsv,
+  exportSessionsCsv,
+  useSessionLifecycle,
+} from '../../sessions';
 
 function formatDate(value?: string | null): string {
   if (!value) return '-';
@@ -115,6 +119,24 @@ export function SessionLifecyclePanel() {
             className="rounded-2xl border border-slate-200 px-4 py-2 text-xs font-black text-slate-700"
           >
             {showEvents ? 'Hide Events' : 'Show Events'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => exportSessionsCsv(sessionHistory)}
+            disabled={sessionHistory.length === 0}
+            className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-black text-emerald-700 disabled:opacity-50"
+          >
+            Export Sessions CSV
+          </button>
+
+          <button
+            type="button"
+            onClick={() => exportSessionEventsCsv(lifecycleEvents)}
+            disabled={lifecycleEvents.length === 0}
+            className="rounded-2xl border border-purple-200 bg-purple-50 px-4 py-2 text-xs font-black text-purple-700 disabled:opacity-50"
+          >
+            Export Events CSV
           </button>
 
           <button

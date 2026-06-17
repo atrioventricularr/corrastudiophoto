@@ -47,6 +47,15 @@ declare global {
     backgroundType?: 'image' | 'video';
   };
 
+  type CorraSecretStatus = {
+    key: string;
+    configured: boolean;
+    label: string | null;
+    maskedValue: string;
+    updatedAt: string | null;
+    error?: string;
+  };
+
   interface Window {
     corraDesktop?: {
       device: {
@@ -62,6 +71,20 @@ declare global {
       };
       assets: {
         pickBackground: () => Promise<CorraPickedBackgroundAsset>;
+      };
+      secureVault: {
+        setSecret: (input: {
+          key: string;
+          value: string;
+          label?: string;
+        }) => Promise<CorraSecretStatus>;
+        getSecretStatus: (input: {
+          key: string;
+        }) => Promise<CorraSecretStatus>;
+        deleteSecret: (input: {
+          key: string;
+        }) => Promise<CorraSecretStatus>;
+        listSecretStatuses: () => Promise<CorraSecretStatus[]>;
       };
     };
   }

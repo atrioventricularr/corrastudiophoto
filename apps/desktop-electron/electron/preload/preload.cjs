@@ -12,4 +12,10 @@ contextBridge.exposeInMainWorld("corraDesktop", {
   assets: {
     pickBackground: () => ipcRenderer.invoke("corra:asset-pick-background"),
   },
+  secureVault: {
+    setSecret: (input) => ipcRenderer.invoke("corra:vault-set-secret", input),
+    getSecretStatus: (input) => ipcRenderer.invoke("corra:vault-get-secret-status", input),
+    deleteSecret: (input) => ipcRenderer.invoke("corra:vault-delete-secret", input),
+    listSecretStatuses: () => ipcRenderer.invoke("corra:vault-list-secret-statuses"),
+  },
 });

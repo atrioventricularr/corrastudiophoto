@@ -19,6 +19,7 @@ import { AdminSettings, FrameTemplate } from '../types';
 import { playRetroBeep } from '../utils/audio';
 import BrandAppearancePanel from './admin/BrandAppearancePanel';
 import AdminCredentialPanel from './admin/AdminCredentialPanel';
+import PaymentSettingsPanel from './admin/PaymentSettingsPanel';
 
 interface AdminPanelProps {
   settings: AdminSettings;
@@ -144,6 +145,9 @@ export default function AdminPanel({
         <BrandAppearancePanel />
         <div className="mt-6">
           <AdminCredentialPanel />
+        <div className="mt-6">
+          <PaymentSettingsPanel />
+        </div>
         </div>
       </div>
 

@@ -376,6 +376,190 @@ async function pickBackgroundAsset() {
   };
 }
 
+
+function getSecureVaultPath() {
+  return path.join(app.getPath("userData"), "secure-vault.json");
+}
+
+function getSecureVaultKey() {
+  const raw = [
+    createDeviceFingerprint(),
+    app.getPath("userData"),
+    "corra-secure-vault-v1",
+  ].join("|");
+
+  return crypto.createHash("sha256").update(raw).digest();
+}
+
+function encryptSecretValue(value) {
+  const iv = crypto.randomBytes(12);
+  const key = getSecureVaultKey();
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([
+    cipher.update(String(value), "utf8"),
+    cipher.final(),
+  ]);
+  const tag = cipher.getAuthTag();
+
+  return {
+    iv: iv.toString("base64"),
+    tag: tag.toString("base64"),
+    ciphertext: encrypted.toString("base64"),
+  };
+}
+
+function decryptSecretValue(payload) {
+  const key = getSecureVaultKey();
+  const decipher = crypto.createDecipheriv(
+    "aes-256-gcm",
+    key,
+    Buffer.from(payload.iv, "base64"),
+  );
+
+  decipher.setAuthTag(Buffer.from(payload.tag, "base64"));
+
+  const decrypted = Buffer.concat([
+    decipher.update(Buffer.from(payload.ciphertext, "base64")),
+    decipher.final(),
+  ]);
+
+  return decrypted.toString("utf8");
+}
+
+function readSecureVault() {
+  const vaultPath = getSecureVaultPath();
+
+  if (!fs.existsSync(vaultPath)) {
+    return {
+      version: 1,
+      items: {},
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(vaultPath, "utf8"));
+
+    return {
+      version: 1,
+      items: parsed.items || {},
+    };
+  } catch {
+    return {
+      version: 1,
+      items: {},
+    };
+  }
+}
+
+function writeSecureVault(vault) {
+  const vaultPath = getSecureVaultPath();
+
+  ensureDirectory(path.dirname(vaultPath));
+
+  fs.writeFileSync(
+    vaultPath,
+    JSON.stringify(
+      {
+        version: 1,
+        items: vault.items || {},
+      },
+      null,
+      2,
+    ),
+  );
+}
+
+function maskSecret(value) {
+  const stringValue = String(value || "");
+
+  if (!stringValue) {
+    return "";
+  }
+
+  if (stringValue.length <= 8) {
+    return "••••";
+  }
+
+  return `${stringValue.slice(0, 3)}••••${stringValue.slice(-4)}`;
+}
+
+function getSecretStatus(secretKey) {
+  const vault = readSecureVault();
+  const item = vault.items[secretKey];
+
+  if (!item) {
+    return {
+      key: secretKey,
+      configured: false,
+      label: null,
+      maskedValue: "",
+      updatedAt: null,
+    };
+  }
+
+  let maskedValue = "••••";
+
+  try {
+    maskedValue = maskSecret(decryptSecretValue(item.encrypted));
+  } catch {
+    maskedValue = "••••";
+  }
+
+  return {
+    key: secretKey,
+    configured: true,
+    label: item.label || secretKey,
+    maskedValue,
+    updatedAt: item.updatedAt || null,
+  };
+}
+
+function setSecretValue(secretKey, secretValue, label) {
+  if (!secretKey || !String(secretKey).trim()) {
+    throw new Error("Missing secret key.");
+  }
+
+  if (!secretValue || !String(secretValue).trim()) {
+    throw new Error("Missing secret value.");
+  }
+
+  const vault = readSecureVault();
+
+  vault.items[secretKey] = {
+    label: label || secretKey,
+    encrypted: encryptSecretValue(secretValue),
+    updatedAt: new Date().toISOString(),
+  };
+
+  writeSecureVault(vault);
+
+  return getSecretStatus(secretKey);
+}
+
+function deleteSecretValue(secretKey) {
+  const vault = readSecureVault();
+
+  delete vault.items[secretKey];
+
+  writeSecureVault(vault);
+
+  return {
+    key: secretKey,
+    configured: false,
+    label: null,
+    maskedValue: "",
+    updatedAt: null,
+  };
+}
+
+function listSecretStatuses() {
+  const vault = readSecureVault();
+
+  return Object.keys(vault.items || {}).map((secretKey) =>
+    getSecretStatus(secretKey),
+  );
+}
+
 function registerIpcHandlers() {
   ipcMain.handle("corra:device-info", async () => {
     return getDeviceInfo();
@@ -408,6 +592,59 @@ function registerIpcHandlers() {
         cancelled: true,
         error: error instanceof Error ? error.message : "Unknown asset picker error",
       };
+    }
+  });
+
+  ipcMain.handle("corra:vault-set-secret", async (_event, input) => {
+    try {
+      return setSecretValue(input?.key, input?.value, input?.label);
+    } catch (error) {
+      return {
+        key: input?.key || "",
+        configured: false,
+        label: input?.label || null,
+        maskedValue: "",
+        updatedAt: null,
+        error: error instanceof Error ? error.message : "Unknown vault set error",
+      };
+    }
+  });
+
+  ipcMain.handle("corra:vault-get-secret-status", async (_event, input) => {
+    try {
+      return getSecretStatus(input?.key);
+    } catch (error) {
+      return {
+        key: input?.key || "",
+        configured: false,
+        label: null,
+        maskedValue: "",
+        updatedAt: null,
+        error: error instanceof Error ? error.message : "Unknown vault status error",
+      };
+    }
+  });
+
+  ipcMain.handle("corra:vault-delete-secret", async (_event, input) => {
+    try {
+      return deleteSecretValue(input?.key);
+    } catch (error) {
+      return {
+        key: input?.key || "",
+        configured: false,
+        label: null,
+        maskedValue: "",
+        updatedAt: null,
+        error: error instanceof Error ? error.message : "Unknown vault delete error",
+      };
+    }
+  });
+
+  ipcMain.handle("corra:vault-list-secret-statuses", async () => {
+    try {
+      return listSecretStatuses();
+    } catch {
+      return [];
     }
   });
 }

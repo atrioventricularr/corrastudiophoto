@@ -14,8 +14,10 @@ import { playRetroBeep } from '../utils/audio';
 import { AdminSettings } from '../types';
 import QrCodeImage from './shared/QrCodeImage';
 import {
+  checkDokuQrisStatus,
   createDokuQris,
   getPaymentTransactionStatus,
+  isCheckDokuQrisStatusConfigured,
   isCreateDokuQrisConfigured,
   isPaymentStatusApiConfigured,
   usePaymentSettings,
@@ -201,6 +203,7 @@ export default function PaymentScreen({
     useState<CreateDokuQrisResult | null>(null);
   const [dokuQrisError, setDokuQrisError] = useState('');
   const [isPollingDokuStatus, setIsPollingDokuStatus] = useState(false);
+  const [isCheckingDokuStatus, setIsCheckingDokuStatus] = useState(false);
   const [dokuRemoteStatus, setDokuRemoteStatus] = useState('idle');
   const [dokuStatusMessage, setDokuStatusMessage] = useState('');
   const dokuQrisText = extractDokuQrisText(dokuQrisResult);
@@ -441,6 +444,74 @@ export default function PaymentScreen({
     }
   };
 
+  const handleCheckDokuStatus = async () => {
+    if (!transactionIdRef.current) {
+      setDokuQrisError('Transaction ID belum tersedia.');
+      return;
+    }
+
+    if (!isCheckDokuQrisStatusConfigured()) {
+      setDokuQrisError(
+        'DOKU check status API belum dikonfigurasi di .env.local.',
+      );
+      return;
+    }
+
+    setDokuQrisError('');
+    setDokuStatusMessage('Checking DOKU payment status...');
+    setIsCheckingDokuStatus(true);
+
+    try {
+      const result = await checkDokuQrisStatus({
+        transactionId: transactionIdRef.current,
+        environment: paymentConfig.doku.environment,
+      });
+
+      const nextStatus = result.status || 'unknown';
+      setDokuRemoteStatus(nextStatus);
+
+      if (nextStatus === 'confirmed' || nextStatus === 'voucher_used') {
+        setDokuStatusMessage('DOKU payment confirmed from status inquiry.');
+
+        confirmPaymentTransaction(transactionIdRef.current, {
+          status: 'confirmed',
+          confirmationCode:
+            String(result.transactionRecord?.confirmation_code || '') ||
+            `DOKU_STATUS_CONFIRMED_${transactionIdRef.current}`,
+          metadata: {
+            statusInquiry: true,
+            remoteStatus: nextStatus,
+            dokuStatusResponse: result.doku || null,
+            transactionRecord: result.transactionRecord || null,
+          },
+        });
+
+        playRetroBeep('success');
+
+        window.setTimeout(() => {
+          onPaymentSuccess(`DOKU_STATUS_CONFIRMED_${transactionIdRef.current}`);
+        }, 800);
+
+        return;
+      }
+
+      if (nextStatus === 'failed' || nextStatus === 'cancelled') {
+        setDokuQrisError(
+          result.error || `DOKU payment status inquiry: ${nextStatus}`,
+        );
+        return;
+      }
+
+      setDokuStatusMessage(
+        result.error
+          ? `DOKU status: ${nextStatus}. ${result.error}`
+          : `DOKU status: ${nextStatus}. Payment not confirmed yet.`,
+      );
+    } finally {
+      setIsCheckingDokuStatus(false);
+    }
+  };
+
   const handleConfirmPayment = () => {
     if (currentProvider === 'DOKU_QRIS' && !dokuQrisResult?.ok) {
       setDokuQrisError('Generate DOKU QRIS first before confirming payment.');
@@ -618,6 +689,21 @@ export default function PaymentScreen({
                     : dokuQrisResult?.ok
                       ? 'Regenerate DOKU QRIS'
                       : 'Generate DOKU QRIS'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCheckDokuStatus}
+                  disabled={
+                    isCheckingDokuStatus ||
+                    !dokuQrisResult?.ok ||
+                    !isCheckDokuQrisStatusConfigured()
+                  }
+                  className="mt-3 w-full rounded-2xl border border-blue-200 bg-white px-5 py-3 text-xs font-black text-blue-800 disabled:opacity-50"
+                >
+                  {isCheckingDokuStatus
+                    ? 'Checking DOKU Status...'
+                    : 'Check DOKU Status'}
                 </button>
 
                 {!paymentConfig.doku.merchantId && (

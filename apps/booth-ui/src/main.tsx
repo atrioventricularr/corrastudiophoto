@@ -4,14 +4,17 @@ import App from './App.tsx';
 import './index.css';
 import { BrandThemeProvider, ThemedBackground } from './branding';
 import { PaymentSettingsProvider, PaymentTransactionProvider } from './payments';
+import { SessionLifecycleProvider } from './sessions';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrandThemeProvider>
       <PaymentSettingsProvider>
         <PaymentTransactionProvider>
-          <ThemedBackground />
-          <App />
+          <SessionLifecycleProvider>
+            <ThemedBackground />
+            <App />
+          </SessionLifecycleProvider>
         </PaymentTransactionProvider>
       </PaymentSettingsProvider>
     </BrandThemeProvider>

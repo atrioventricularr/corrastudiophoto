@@ -15,7 +15,9 @@ import { AdminSettings } from '../types';
 import QrCodeImage from './shared/QrCodeImage';
 import {
   createDokuQris,
+  getPaymentTransactionStatus,
   isCreateDokuQrisConfigured,
+  isPaymentStatusApiConfigured,
   usePaymentSettings,
   usePaymentTransactions,
   type CreateDokuQrisResult,
@@ -198,6 +200,9 @@ export default function PaymentScreen({
   const [dokuQrisResult, setDokuQrisResult] =
     useState<CreateDokuQrisResult | null>(null);
   const [dokuQrisError, setDokuQrisError] = useState('');
+  const [isPollingDokuStatus, setIsPollingDokuStatus] = useState(false);
+  const [dokuRemoteStatus, setDokuRemoteStatus] = useState('idle');
+  const [dokuStatusMessage, setDokuStatusMessage] = useState('');
   const dokuQrisText = extractDokuQrisText(dokuQrisResult);
 
   const activeVouchers = useMemo(() => {
@@ -262,6 +267,110 @@ export default function PaymentScreen({
     paymentConfig.staticQris.merchantName,
   ]);
 
+  // AUTO_POLL_DOKU_PAYMENT_STATUS
+  useEffect(() => {
+    if (currentProvider !== 'DOKU_QRIS') {
+      return;
+    }
+
+    if (!dokuQrisResult?.ok || !transactionIdRef.current) {
+      return;
+    }
+
+    if (!isPaymentStatusApiConfigured()) {
+      setDokuStatusMessage(
+        'Payment status API belum dikonfigurasi di .env.local.',
+      );
+      return;
+    }
+
+    let isCancelled = false;
+    let attempt = 0;
+    let timer: number | undefined;
+
+    const pollStatus = async () => {
+      if (isCancelled || !transactionIdRef.current) {
+        return;
+      }
+
+      attempt += 1;
+      setIsPollingDokuStatus(true);
+
+      const result = await getPaymentTransactionStatus({
+        transactionId: transactionIdRef.current,
+      });
+
+      if (isCancelled) {
+        return;
+      }
+
+      const nextStatus = result.status || 'unknown';
+      setDokuRemoteStatus(nextStatus);
+
+      if (nextStatus === 'confirmed' || nextStatus === 'voucher_used') {
+        setIsPollingDokuStatus(false);
+        setDokuStatusMessage('DOKU payment confirmed.');
+
+        confirmPaymentTransaction(transactionIdRef.current, {
+          status: 'confirmed',
+          confirmationCode:
+            String(result.transaction?.confirmation_code || '') ||
+            `DOKU_CONFIRMED_${transactionIdRef.current}`,
+          metadata: {
+            remoteStatus: nextStatus,
+            remoteTransaction: result.transaction || null,
+          },
+        });
+
+        playRetroBeep('success');
+
+        window.setTimeout(() => {
+          onPaymentSuccess(`DOKU_CONFIRMED_${transactionIdRef.current}`);
+        }, 800);
+
+        return;
+      }
+
+      if (nextStatus === 'failed' || nextStatus === 'cancelled') {
+        setIsPollingDokuStatus(false);
+        setDokuQrisError(
+          result.error || `DOKU payment status: ${nextStatus}`,
+        );
+        return;
+      }
+
+      setDokuStatusMessage(
+        result.found
+          ? `Waiting for DOKU payment confirmation... (${nextStatus})`
+          : 'Waiting for DOKU webhook notification...',
+      );
+
+      if (attempt < 60) {
+        timer = window.setTimeout(pollStatus, 3000);
+      } else {
+        setIsPollingDokuStatus(false);
+        setDokuStatusMessage(
+          'Payment status polling stopped. You can confirm manually or regenerate QRIS.',
+        );
+      }
+    };
+
+    pollStatus();
+
+    return () => {
+      isCancelled = true;
+
+      if (timer) {
+        window.clearTimeout(timer);
+      }
+    };
+  }, [
+    confirmPaymentTransaction,
+    currentProvider,
+    dokuQrisResult?.ok,
+    onPaymentSuccess,
+  ]);
+
   const handleVoucherSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -302,6 +411,8 @@ export default function PaymentScreen({
 
   const handleGenerateDokuQris = async () => {
     setDokuQrisError('');
+    setDokuStatusMessage('');
+    setDokuRemoteStatus('generating');
     setIsGeneratingDokuQris(true);
 
     try {
@@ -319,7 +430,11 @@ export default function PaymentScreen({
       setDokuQrisResult(result);
 
       if (!result.ok) {
+        setDokuRemoteStatus('generate_failed');
         setDokuQrisError(result.error || 'Failed to generate DOKU QRIS.');
+      } else {
+        setDokuRemoteStatus('waiting_payment');
+        setDokuStatusMessage('QRIS generated. Waiting for payment confirmation...');
       }
     } finally {
       setIsGeneratingDokuQris(false);
@@ -532,6 +647,21 @@ export default function PaymentScreen({
                         dokuQrisResult.transactionId}
                     </p>
 
+                    <div className="mt-3 rounded-xl bg-white p-3">
+                      <p className="text-[10px] font-black uppercase tracking-wider">
+                        Remote Status
+                      </p>
+                      <p className="mt-1 font-mono text-xs">
+                        {isPollingDokuStatus ? 'Polling · ' : ''}
+                        {dokuRemoteStatus}
+                      </p>
+                      {dokuStatusMessage && (
+                        <p className="mt-1 text-[10px] font-bold">
+                          {dokuStatusMessage}
+                        </p>
+                      )}
+                    </div>
+
                     {dokuQrisText ? (
                       <div className="mt-3 rounded-2xl bg-white p-4 text-center">
                         <p className="mb-3 font-black">Scan QRIS</p>
@@ -611,7 +741,11 @@ export default function PaymentScreen({
           >
             <CheckCircle2 className="w-4 h-4 text-white fill-current" />
             <span>
-              {isProcessingPayment ? dict.processingBtn : dict.confirmBtn}
+              {isProcessingPayment
+                ? dict.processingBtn
+                : currentProvider === 'DOKU_QRIS' && isPollingDokuStatus
+                  ? 'Waiting DOKU Payment...'
+                  : dict.confirmBtn}
             </span>
           </button>
         </div>

@@ -1,3 +1,5 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 type CreateDokuQrisPayload = {
   transactionId?: string;
   amountIdr?: number;
@@ -315,6 +317,87 @@ Deno.serve(async (request) => {
 
     const dokuBody = await dokuResponse.json().catch(() => null);
 
+    let transactionRecord: unknown = null;
+    let transactionRecordError: string | null = null;
+
+    if (dokuResponse.ok) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL');
+      const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+      if (supabaseUrl && serviceRoleKey) {
+        const supabase = createClient(supabaseUrl, serviceRoleKey, {
+          auth: {
+            persistSession: false,
+          },
+        });
+
+        const { data: existingTransaction } = await supabase
+          .from('booth_payment_transactions')
+          .select('transaction_id,status,metadata')
+          .eq('transaction_id', transactionId)
+          .maybeSingle();
+
+        const pendingRow = {
+          transaction_id: transactionId,
+          provider: 'DOKU_QRIS',
+          status: 'pending',
+          amount_idr: amountIdr,
+          currency: 'IDR',
+          merchant_name: merchantId,
+          source: 'create-doku-qris',
+          metadata: {
+            ...(existingTransaction?.metadata || {}),
+            dokuEnvironment: environment,
+            dokuExternalId: externalId,
+            dokuQrisGeneratedAt: new Date().toISOString(),
+            dokuRequest: {
+              partnerReferenceNo: transactionId,
+              amountIdr,
+              merchantId,
+              terminalId,
+              validityPeriod,
+            },
+            dokuResponse: dokuBody,
+          },
+          client_created_at: new Date().toISOString(),
+          client_updated_at: new Date().toISOString(),
+          synced_at: new Date().toISOString(),
+        };
+
+        if (!existingTransaction) {
+          const { data, error } = await supabase
+            .from('booth_payment_transactions')
+            .insert(pendingRow)
+            .select('*')
+            .single();
+
+          transactionRecord = data;
+          transactionRecordError = error?.message || null;
+        } else if (existingTransaction.status === 'pending') {
+          const { data, error } = await supabase
+            .from('booth_payment_transactions')
+            .update({
+              amount_idr: pendingRow.amount_idr,
+              merchant_name: pendingRow.merchant_name,
+              metadata: pendingRow.metadata,
+              client_updated_at: pendingRow.client_updated_at,
+              synced_at: pendingRow.synced_at,
+            })
+            .eq('transaction_id', transactionId)
+            .select('*')
+            .single();
+
+          transactionRecord = data;
+          transactionRecordError = error?.message || null;
+        } else {
+          transactionRecord = existingTransaction;
+        }
+      } else {
+        transactionRecordError =
+          'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY unavailable; skipped pending transaction record.';
+      }
+    }
+
     return jsonResponse(
       {
         ok: dokuResponse.ok,
@@ -327,6 +410,8 @@ Deno.serve(async (request) => {
           terminalId,
           validityPeriod,
         },
+        transactionRecord,
+        transactionRecordError,
         doku: dokuBody,
         error: dokuResponse.ok
           ? null

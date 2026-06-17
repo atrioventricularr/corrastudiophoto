@@ -21,6 +21,7 @@ import BrandAppearancePanel from './admin/BrandAppearancePanel';
 import AdminCredentialPanel from './admin/AdminCredentialPanel';
 import PaymentSettingsPanel from './admin/PaymentSettingsPanel';
 import PaymentTransactionsPanel from './admin/PaymentTransactionsPanel';
+import { SessionLifecyclePanel } from './admin/SessionLifecyclePanel';
 
 interface AdminPanelProps {
   settings: AdminSettings;
@@ -150,7 +151,9 @@ export default function AdminPanel({
           <PaymentSettingsPanel />
         <div className="mt-6">
           <PaymentTransactionsPanel />
-        </div>
+        
+        <SessionLifecyclePanel />
+</div>
         </div>
         </div>
       </div>

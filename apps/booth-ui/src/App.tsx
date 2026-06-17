@@ -16,8 +16,16 @@ import ResultScreen from './components/ResultScreen';
 import AdminPanel from './components/AdminPanel';
 import AdminLoginScreen from './components/AdminLoginScreen';
 import LicenseActivationScreen from './components/LicenseActivationScreen';
+import { useSessionLifecycle } from './sessions';
 
 export default function App() {
+  const {
+    currentSession,
+    startBoothSession,
+    transitionBoothSession,
+    cancelBoothSession,
+  } = useSessionLifecycle();
+
   // Navigation active screen
   const [activeScreen, setActiveScreen] = useState<ApplicationScreen>('welcome');
   const [isAdminActive, setIsAdminActive] = useState<boolean>(false);
@@ -117,6 +125,20 @@ export default function App() {
   };
 
   const handleStartSession = () => {
+    const session = startBoothSession({
+      metadata: {
+        source: 'welcome_screen',
+      },
+    });
+
+    transitionBoothSession({
+      toStatus: 'payment_pending',
+      reason: 'session_started_from_welcome',
+      metadata: {
+        sessionId: session.id,
+      },
+    });
+
     if (isCorraDesktop() && !isLicenseReady) {
       addLog('[LICENSE] Start blocked. License activation required.');
       setActiveScreen('license_activation');

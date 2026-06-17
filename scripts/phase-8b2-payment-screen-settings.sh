@@ -1,3 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "========================================"
+echo " Corra Booth - Phase 8B2 Payment Screen Settings"
+echo "========================================"
+
+fail() {
+  echo ""
+  echo "ERROR: $1"
+  echo ""
+  exit 1
+}
+
+write_file() {
+  local file_path="$1"
+  mkdir -p "$(dirname "$file_path")"
+  cat > "$file_path"
+  echo "WRITE file: $file_path"
+}
+
+[ -f "apps/booth-ui/src/components/PaymentScreen.tsx" ] || fail "PaymentScreen.tsx not found."
+[ -f "apps/booth-ui/src/payments/index.ts" ] || fail "payments module not found. Run 8A1 first."
+
+echo ""
+echo "Replacing PaymentScreen with payment settings integration..."
+
+write_file "apps/booth-ui/src/components/PaymentScreen.tsx" <<'TSX'
 import React, { useMemo, useState } from 'react';
 import {
   ArrowLeft,
@@ -446,3 +474,53 @@ export default function PaymentScreen({
     </div>
   );
 }
+TSX
+
+echo ""
+echo "Writing docs..."
+
+write_file "docs/phase-8b2-payment-screen-settings.md" <<'MD'
+# Phase 8B2 - Payment Screen Settings Integration
+
+## Added
+
+PaymentScreen now uses Admin Payment Settings:
+
+- session price
+- merchant name
+- selected payment provider
+- Static QRIS image URL from QRIS picker
+- Manual Cash instructions
+- DOKU QRIS placeholder
+- Mayar Checkout placeholder/link
+- voucher flow remains active
+
+## Provider Status
+
+- Static QRIS: usable for MVP with manual confirmation
+- Manual Cash: usable for MVP with operator confirmation
+- DOKU QRIS: UI placeholder until API integration
+- Mayar Checkout: link placeholder until API integration
+MD
+
+echo ""
+echo "Verifying..."
+
+grep -q "usePaymentSettings" apps/booth-ui/src/components/PaymentScreen.tsx || fail "PaymentScreen missing usePaymentSettings."
+grep -q "STATIC_QRIS" apps/booth-ui/src/components/PaymentScreen.tsx || fail "PaymentScreen missing STATIC_QRIS handling."
+grep -q "MANUAL_CASH" apps/booth-ui/src/components/PaymentScreen.tsx || fail "PaymentScreen missing MANUAL_CASH handling."
+grep -q "DOKU_QRIS" apps/booth-ui/src/components/PaymentScreen.tsx || fail "PaymentScreen missing DOKU_QRIS handling."
+grep -q "MAYAR_CHECKOUT" apps/booth-ui/src/components/PaymentScreen.tsx || fail "PaymentScreen missing MAYAR_CHECKOUT handling."
+
+echo ""
+echo "========================================"
+echo " Phase 8B2 completed."
+echo "========================================"
+echo ""
+echo "Next:"
+echo "  pnpm --filter @corra/booth-ui typecheck"
+echo "  pnpm --filter @corra/booth-ui dev -- --host 0.0.0.0 --port 5173"
+echo "  git add ."
+echo "  git commit -m \"feat: connect payment screen to payment settings\""
+echo "  git push origin main"
+echo ""

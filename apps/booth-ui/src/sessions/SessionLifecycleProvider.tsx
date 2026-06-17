@@ -16,6 +16,10 @@ import {
   saveLifecycleEvents,
   saveSessionHistory,
 } from './local-session-storage';
+import {
+  isSessionLifecycleSyncConfigured,
+  recordBoothSessionLifecycle,
+} from './supabase-session-lifecycle-sync';
 import type {
   CorraBoothSession,
   CorraSessionLifecycleEvent,
@@ -88,6 +92,38 @@ export function SessionLifecycleProvider({
   useEffect(() => {
     saveLifecycleEvents(lifecycleEvents);
   }, [lifecycleEvents]);
+
+  useEffect(() => {
+    if (!currentSession) {
+      return;
+    }
+
+    if (!isSessionLifecycleSyncConfigured()) {
+      return;
+    }
+
+    const currentSessionEvents = lifecycleEvents.filter(
+      (event) => event.sessionId === currentSession.id,
+    );
+
+    const timer = window.setTimeout(() => {
+      void recordBoothSessionLifecycle({
+        session: currentSession,
+        events: currentSessionEvents,
+      }).then((result) => {
+        if (!result.ok) {
+          console.warn(
+            '[Corra] Failed to sync session lifecycle:',
+            result.error,
+          );
+        }
+      });
+    }, 700);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [currentSession, lifecycleEvents]);
 
   const appendEvent = useCallback((event: CorraSessionLifecycleEvent) => {
     setLifecycleEvents((current) => [event, ...current].slice(0, 300));

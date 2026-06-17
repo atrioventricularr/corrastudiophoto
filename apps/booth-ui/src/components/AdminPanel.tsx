@@ -20,6 +20,7 @@ import { playRetroBeep } from '../utils/audio';
 import BrandAppearancePanel from './admin/BrandAppearancePanel';
 import AdminCredentialPanel from './admin/AdminCredentialPanel';
 import PaymentSettingsPanel from './admin/PaymentSettingsPanel';
+import PaymentTransactionsPanel from './admin/PaymentTransactionsPanel';
 
 interface AdminPanelProps {
   settings: AdminSettings;
@@ -147,6 +148,9 @@ export default function AdminPanel({
           <AdminCredentialPanel />
         <div className="mt-6">
           <PaymentSettingsPanel />
+        <div className="mt-6">
+          <PaymentTransactionsPanel />
+        </div>
         </div>
         </div>
       </div>

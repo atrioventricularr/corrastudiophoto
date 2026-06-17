@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Banknote,
@@ -12,7 +12,7 @@ import {
 import { motion } from 'motion/react';
 import { playRetroBeep } from '../utils/audio';
 import { AdminSettings } from '../types';
-import { usePaymentSettings } from '../payments';
+import { usePaymentSettings, usePaymentTransactions } from '../payments';
 
 interface PaymentScreenProps {
   adminSettings: AdminSettings;
@@ -123,6 +123,12 @@ export default function PaymentScreen({
 }: PaymentScreenProps) {
   const dict = DICTIONARY[lang];
   const { paymentConfig } = usePaymentSettings();
+  const {
+    createPaymentTransaction,
+    confirmPaymentTransaction,
+    cancelPaymentTransaction,
+  } = usePaymentTransactions();
+  const transactionIdRef = useRef<string | null>(null);
 
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherError, setVoucherError] = useState(false);
@@ -146,6 +152,51 @@ export default function PaymentScreen({
 
   const currentProvider = paymentConfig.provider;
 
+
+  useEffect(() => {
+    if (transactionIdRef.current) {
+      return;
+    }
+
+    const transaction = createPaymentTransaction({
+      provider: paymentConfig.provider,
+      amountIdr: paymentConfig.priceIdr || adminSettings.pricingIDR || 0,
+      merchantName:
+        paymentConfig.merchantName ||
+        paymentConfig.staticQris.merchantName ||
+        'Corra Studio',
+      metadata: {
+        screen: 'PaymentScreen',
+        qrisConfigured: Boolean(
+          paymentConfig.staticQris.imageUrl || adminSettings.qrisImageUrl,
+        ),
+        dokuEnvironment: paymentConfig.doku.environment,
+      },
+    });
+
+    transactionIdRef.current = transaction.id;
+
+    return () => {
+      if (transactionIdRef.current) {
+        cancelPaymentTransaction(
+          transactionIdRef.current,
+          'left_payment_screen_before_confirmation',
+        );
+      }
+    };
+  }, [
+    adminSettings.pricingIDR,
+    adminSettings.qrisImageUrl,
+    cancelPaymentTransaction,
+    createPaymentTransaction,
+    paymentConfig.doku.environment,
+    paymentConfig.merchantName,
+    paymentConfig.priceIdr,
+    paymentConfig.provider,
+    paymentConfig.staticQris.imageUrl,
+    paymentConfig.staticQris.merchantName,
+  ]);
+
   const handleVoucherSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -163,6 +214,17 @@ export default function PaymentScreen({
       setVoucherError(false);
 
       setTimeout(() => {
+        if (transactionIdRef.current) {
+          confirmPaymentTransaction(transactionIdRef.current, {
+            status: 'voucher_used',
+            voucherCode: cleanCode,
+            confirmationCode: `VOUCHER_${cleanCode}`,
+            metadata: {
+              voucherValidatedAt: new Date().toISOString(),
+            },
+          });
+        }
+
         onPaymentSuccess(cleanCode);
       }, 900);
     } else {
@@ -177,8 +239,23 @@ export default function PaymentScreen({
     playRetroBeep('success');
     setIsProcessingPayment(true);
 
+    const confirmationCode = getPaymentSuccessCode(currentProvider);
+
     setTimeout(() => {
-      onPaymentSuccess(getPaymentSuccessCode(currentProvider));
+      if (transactionIdRef.current) {
+        confirmPaymentTransaction(transactionIdRef.current, {
+          status: 'confirmed',
+          confirmationCode,
+          metadata: {
+            confirmedBy: paymentConfig.requireOperatorConfirmation
+              ? 'operator_manual_confirmation'
+              : 'customer_self_confirmation',
+            confirmedAtProvider: currentProvider,
+          },
+        });
+      }
+
+      onPaymentSuccess(confirmationCode);
     }, 1000);
   };
 

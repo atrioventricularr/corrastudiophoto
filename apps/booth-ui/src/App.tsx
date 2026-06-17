@@ -160,23 +160,55 @@ export default function App() {
   };
 
   const handleSelectLayout = (layoutId: LayoutType) => {
+    transitionBoothSession({
+      toStatus: 'layout_selected',
+      reason: 'layout_selected_by_customer',
+      metadata: {
+        step: 'layout_selection',
+      },
+    });
+
     setSelectedLayoutId(layoutId);
     addLog(`[ACTION] Selected photo layout: ${layoutId.toUpperCase()}`);
   };
 
   const handleSelectTemplate = (templateId: string) => {
+    transitionBoothSession({
+      toStatus: 'template_selected',
+      reason: 'template_selected_by_customer',
+      metadata: {
+        step: 'template_selection',
+      },
+    });
+
     setSelectedTemplateId(templateId);
     const tplName = templates.find(t => t.id === templateId)?.name || templateId;
     addLog(`[ACTION] Swapped frame template theme to: "${tplName}"`);
   };
 
   const handlePhotosCaptured = (photosArr: string[]) => {
+    transitionBoothSession({
+      toStatus: 'captured',
+      reason: 'photos_captured',
+      metadata: {
+        step: 'capture_complete',
+      },
+    });
+
     addLog(`[IO System] Captured ${photosArr.length} pose samples securely.`);
     setCapturedPhotos(photosArr);
     setActiveScreen('processing');
   };
 
   const handleProcessingComplete = () => {
+    transitionBoothSession({
+      toStatus: 'completed',
+      reason: 'image_processing_completed',
+      metadata: {
+        step: 'result_ready',
+      },
+    });
+
     addLog('[PRINT] Frame composited. Transmitting pixels to physical print buffers...');
     // Decrease paper counters as a mock of action
     setAdminSettings(prev => ({

@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld("corraDesktop", {
   },
   assets: {
     pickBackground: () => ipcRenderer.invoke("corra:asset-pick-background"),
+    pickQris: () => ipcRenderer.invoke("corra:asset-pick-qris"),
   },
   secureVault: {
     setSecret: (input) => ipcRenderer.invoke("corra:vault-set-secret", input),

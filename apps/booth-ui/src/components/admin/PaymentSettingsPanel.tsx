@@ -11,6 +11,10 @@ import {
   setDesktopSecret,
   type CorraSecretStatus,
 } from '../../lib/desktop-secure-vault';
+import {
+  isDesktopQrisPickerAvailable,
+  pickDesktopQrisAsset,
+} from '../../lib/desktop-assets';
 
 const PAYMENT_PROVIDER_LABELS: Record<CorraPaymentProviderId, string> = {
   STATIC_QRIS: 'Static QRIS PNG',
@@ -60,6 +64,7 @@ export default function PaymentSettingsPanel() {
     useState<CorraSecretStatus | null>(null);
 
   const vaultAvailable = isDesktopSecureVaultAvailable();
+  const qrisPickerAvailable = isDesktopQrisPickerAvailable();
 
   useEffect(() => {
     let cancelled = false;
@@ -94,6 +99,33 @@ export default function PaymentSettingsPanel() {
         ...patch,
       },
     });
+  };
+
+  const handlePickQrisImage = async () => {
+    setMessage('');
+
+    const result = await pickDesktopQrisAsset();
+
+    if (result.cancelled) {
+      if (result.error) {
+        setMessage(result.error);
+      }
+
+      return;
+    }
+
+    if (!result.url) {
+      setMessage('QRIS file selected, but no usable asset URL was returned.');
+      return;
+    }
+
+    updateStaticQris({
+      imageUrl: result.url,
+      merchantName:
+        paymentConfig.staticQris.merchantName || paymentConfig.merchantName,
+    });
+
+    setMessage(`QRIS image selected: ${result.filename || result.url}`);
   };
 
   const updateDoku = (patch: Partial<typeof paymentConfig.doku>) => {
@@ -328,6 +360,37 @@ export default function PaymentSettingsPanel() {
               />
             </label>
           </div>
+
+          <div className="mt-4 flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={handlePickQrisImage}
+              disabled={!qrisPickerAvailable}
+              className="rounded-2xl bg-[var(--corra-primary)] px-5 py-3 text-sm font-black text-white disabled:opacity-50"
+            >
+              Pick QRIS PNG/JPG/WebP
+            </button>
+          </div>
+
+          {!qrisPickerAvailable && (
+            <p className="mt-3 text-xs text-[var(--corra-muted)]">
+              QRIS local picker is only available inside Electron desktop.
+              Browser preview can still use image URL manually.
+            </p>
+          )}
+
+          {paymentConfig.staticQris.imageUrl && (
+            <div className="mt-4 rounded-2xl border border-[var(--corra-border)] bg-white p-4">
+              <p className="mb-3 text-xs font-black uppercase tracking-wider text-[var(--corra-muted)]">
+                QRIS Preview
+              </p>
+              <img
+                src={paymentConfig.staticQris.imageUrl}
+                alt="Static QRIS Preview"
+                className="max-h-72 rounded-2xl border border-[var(--corra-border)] bg-white object-contain"
+              />
+            </div>
+          )}
         </div>
       )}
 

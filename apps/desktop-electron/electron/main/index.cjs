@@ -560,6 +560,58 @@ function listSecretStatuses() {
   );
 }
 
+
+function isSupportedQrisExtension(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+
+  return [".png", ".jpg", ".jpeg", ".webp"].includes(ext);
+}
+
+async function pickQrisAsset() {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: "Choose Static QRIS Image",
+    properties: ["openFile"],
+    filters: [
+      {
+        name: "QRIS Images",
+        extensions: ["png", "jpg", "jpeg", "webp"],
+      },
+    ],
+  });
+
+  if (result.canceled || !result.filePaths.length) {
+    return {
+      cancelled: true,
+    };
+  }
+
+  const sourcePath = result.filePaths[0];
+
+  if (!isSupportedQrisExtension(sourcePath)) {
+    return {
+      cancelled: true,
+      error: "Unsupported QRIS file. Use PNG, JPG, JPEG, or WebP.",
+    };
+  }
+
+  const kind = "qris";
+  const targetDirectory = getAssetDirectory(kind);
+  ensureDirectory(targetDirectory);
+
+  const filename = sanitizeAssetFilename(sourcePath);
+  const targetPath = path.join(targetDirectory, filename);
+
+  fs.copyFileSync(sourcePath, targetPath);
+
+  return {
+    cancelled: false,
+    sourcePath,
+    targetPath,
+    filename,
+    url: getAssetUrl(kind, filename),
+  };
+}
+
 function registerIpcHandlers() {
   ipcMain.handle("corra:device-info", async () => {
     return getDeviceInfo();
@@ -591,6 +643,17 @@ function registerIpcHandlers() {
       return {
         cancelled: true,
         error: error instanceof Error ? error.message : "Unknown asset picker error",
+      };
+    }
+  });
+
+  ipcMain.handle("corra:asset-pick-qris", async () => {
+    try {
+      return await pickQrisAsset();
+    } catch (error) {
+      return {
+        cancelled: true,
+        error: error instanceof Error ? error.message : "Unknown QRIS picker error",
       };
     }
   });

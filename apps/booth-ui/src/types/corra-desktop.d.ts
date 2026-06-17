@@ -56,6 +56,15 @@ declare global {
     error?: string;
   };
 
+  type CorraPickedQrisAsset = {
+    cancelled: boolean;
+    error?: string;
+    sourcePath?: string;
+    targetPath?: string;
+    filename?: string;
+    url?: string;
+  };
+
   interface Window {
     corraDesktop?: {
       device: {
@@ -71,6 +80,7 @@ declare global {
       };
       assets: {
         pickBackground: () => Promise<CorraPickedBackgroundAsset>;
+        pickQris: () => Promise<CorraPickedQrisAsset>;
       };
       secureVault: {
         setSecret: (input: {

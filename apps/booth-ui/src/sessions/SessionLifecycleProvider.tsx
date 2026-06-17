@@ -25,6 +25,7 @@ import type {
   CorraSessionLifecycleEvent,
   CorraSessionStatus,
   SessionLifecycleContextValue,
+  SessionLifecycleSyncStatus,
   StartBoothSessionInput,
   TransitionBoothSessionInput,
 } from './types';
@@ -80,6 +81,10 @@ export function SessionLifecycleProvider({
   const [lifecycleEvents, setLifecycleEvents] = useState<
     CorraSessionLifecycleEvent[]
   >(() => loadLifecycleEvents());
+  const [syncStatus, setSyncStatus] =
+    useState<SessionLifecycleSyncStatus>('idle');
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     saveCurrentSession(currentSession);
@@ -135,6 +140,64 @@ export function SessionLifecycleProvider({
       return sortSessions([session, ...withoutCurrent]).slice(0, 100);
     });
   }, []);
+
+  const syncCurrentSession = useCallback(async () => {
+    if (!currentSession) {
+      setSyncStatus('skipped');
+      setSyncError('No active session to sync.');
+      return;
+    }
+
+    if (!isSessionLifecycleSyncConfigured()) {
+      setSyncStatus('skipped');
+      setSyncError(
+        'Session lifecycle sync is not configured. Check .env.local.',
+      );
+      return;
+    }
+
+    const currentSessionEvents = lifecycleEvents.filter(
+      (event) => event.sessionId === currentSession.id,
+    );
+
+    setSyncStatus('syncing');
+    setSyncError(null);
+
+    const result = await recordBoothSessionLifecycle({
+      session: currentSession,
+      events: currentSessionEvents,
+    });
+
+    if (!result.ok) {
+      setSyncStatus('failed');
+      setSyncError(result.error || 'Failed to sync session lifecycle.');
+      console.warn(
+        '[Corra] Failed to sync session lifecycle:',
+        result.error,
+      );
+      return;
+    }
+
+    setSyncStatus('synced');
+    setLastSyncedAt(result.syncedAt || new Date().toISOString());
+    setSyncError(null);
+  }, [currentSession, lifecycleEvents]);
+
+  useEffect(() => {
+    if (!currentSession) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void syncCurrentSession();
+    }, 900);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [currentSession, lifecycleEvents, syncCurrentSession]);
+
+  // session_lifecycle_manual_sync
 
   const startBoothSession = useCallback(
     (input: StartBoothSessionInput = {}) => {
@@ -257,6 +320,10 @@ export function SessionLifecycleProvider({
       currentSession,
       sessionHistory,
       lifecycleEvents,
+      syncStatus,
+      lastSyncedAt,
+      syncError,
+      syncCurrentSession,
       startBoothSession,
       transitionBoothSession,
       cancelBoothSession,

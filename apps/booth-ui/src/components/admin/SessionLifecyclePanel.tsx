@@ -42,11 +42,24 @@ function getStatusLabelClass(status?: string | null): string {
   return 'bg-blue-100 text-blue-800';
 }
 
+function getSyncStatusLabelClass(status?: string | null): string {
+  if (status === 'synced') return 'bg-green-100 text-green-800';
+  if (status === 'syncing') return 'bg-yellow-100 text-yellow-800';
+  if (status === 'failed') return 'bg-red-100 text-red-800';
+  if (status === 'skipped') return 'bg-slate-100 text-slate-700';
+
+  return 'bg-blue-100 text-blue-800';
+}
+
 export function SessionLifecyclePanel() {
   const {
     currentSession,
     sessionHistory,
     lifecycleEvents,
+    syncStatus,
+    lastSyncedAt,
+    syncError,
+    syncCurrentSession,
     clearSessionHistory,
   } = useSessionLifecycle();
 
@@ -73,6 +86,26 @@ export function SessionLifecyclePanel() {
           <p className="mt-1 text-xs font-semibold text-slate-500">
             Pantau status session dari payment sampai hasil foto delivered.
           </p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${getSyncStatusLabelClass(
+                syncStatus,
+              )}`}
+            >
+              Sync: {syncStatus}
+            </span>
+
+            <span className="text-[10px] font-bold text-slate-400">
+              Last sync: {formatDate(lastSyncedAt)}
+            </span>
+          </div>
+
+          {syncError && (
+            <p className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
+              {syncError}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-2">
@@ -82,6 +115,15 @@ export function SessionLifecyclePanel() {
             className="rounded-2xl border border-slate-200 px-4 py-2 text-xs font-black text-slate-700"
           >
             {showEvents ? 'Hide Events' : 'Show Events'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void syncCurrentSession()}
+            disabled={!currentSession || syncStatus === 'syncing'}
+            className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-black text-blue-700 disabled:opacity-50"
+          >
+            {syncStatus === 'syncing' ? 'Syncing...' : 'Sync Now'}
           </button>
 
           <button

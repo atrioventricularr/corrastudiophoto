@@ -13,6 +13,13 @@ export type CorraSessionStatus =
   | 'cancelled'
   | 'failed';
 
+export type SessionLifecycleSyncStatus =
+  | 'idle'
+  | 'skipped'
+  | 'syncing'
+  | 'synced'
+  | 'failed';
+
 export type CorraSessionLifecycleEvent = {
   id: string;
   sessionId: string;
@@ -63,5 +70,9 @@ export type SessionLifecycleContextValue = {
   ) => CorraBoothSession | null;
   cancelBoothSession: (reason?: string) => CorraBoothSession | null;
   failBoothSession: (reason?: string) => CorraBoothSession | null;
+  syncStatus: SessionLifecycleSyncStatus;
+  lastSyncedAt: string | null;
+  syncError: string | null;
+  syncCurrentSession: () => Promise<void>;
   clearSessionHistory: () => void;
 };

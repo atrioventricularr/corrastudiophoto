@@ -5,3 +5,4 @@ export * from './PaymentSettingsProvider';
 export * from './transaction-types';
 export * from './local-payment-transactions';
 export * from './PaymentTransactionProvider';
+export * from './supabase-payment-sync';

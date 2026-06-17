@@ -18,6 +18,7 @@ import type {
   CreatePaymentTransactionInput,
   PaymentTransactionContextValue,
 } from './transaction-types';
+import { syncPaymentTransactionToSupabase } from './supabase-payment-sync';
 
 const PaymentTransactionContext =
   createContext<PaymentTransactionContextValue | null>(null);
@@ -76,6 +77,9 @@ export function PaymentTransactionProvider({
         confirmedAt: null,
         cancelledAt: null,
         metadata: input.metadata || {},
+        syncStatus: 'idle',
+        syncedAt: null,
+        syncError: null,
       };
 
       setTransactions((current) => sortTransactions([transaction, ...current]));
@@ -179,6 +183,85 @@ export function PaymentTransactionProvider({
     [updateTransaction],
   );
 
+  const syncPendingTransactions = useCallback(async () => {
+    const toSync = transactions.filter((transaction) => {
+      return (
+        transaction.status !== 'pending' &&
+        transaction.syncStatus !== 'synced' &&
+        transaction.syncStatus !== 'syncing'
+      );
+    });
+
+    for (const transaction of toSync) {
+      const syncingAt = new Date().toISOString();
+
+      setTransactions((current) =>
+        sortTransactions(
+          current.map((item) =>
+            item.id === transaction.id
+              ? {
+                  ...item,
+                  syncStatus: 'syncing',
+                  syncError: null,
+                  updatedAt: syncingAt,
+                }
+              : item,
+          ),
+        ),
+      );
+
+      const result = await syncPaymentTransactionToSupabase(transaction);
+      const finishedAt = new Date().toISOString();
+
+      setTransactions((current) =>
+        sortTransactions(
+          current.map((item) => {
+            if (item.id !== transaction.id) {
+              return item;
+            }
+
+            if (result.ok) {
+              return {
+                ...item,
+                syncStatus: 'synced',
+                syncedAt: result.syncedAt || finishedAt,
+                syncError: null,
+                updatedAt: finishedAt,
+              };
+            }
+
+            return {
+              ...item,
+              syncStatus: result.skipped ? 'skipped' : 'failed',
+              syncError: result.error || 'Unknown sync error.',
+              updatedAt: finishedAt,
+            };
+          }),
+        ),
+      );
+    }
+  }, [transactions]);
+
+  // AUTO_SYNC_PAYMENT_TRANSACTIONS
+  useEffect(() => {
+    const hasAutoSyncableTransaction = transactions.some((transaction) => {
+      return (
+        transaction.status !== 'pending' &&
+        (!transaction.syncStatus || transaction.syncStatus === 'idle')
+      );
+    });
+
+    if (!hasAutoSyncableTransaction) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      syncPendingTransactions();
+    }, 700);
+
+    return () => window.clearTimeout(timer);
+  }, [syncPendingTransactions, transactions]);
+
   const clearPaymentTransactions = useCallback(() => {
     clearLocalPaymentTransactions();
     setTransactions([]);
@@ -194,6 +277,7 @@ export function PaymentTransactionProvider({
       cancelPaymentTransaction,
       failPaymentTransaction,
       clearPaymentTransactions,
+      syncPendingTransactions,
     };
   }, [
     transactions,
@@ -203,6 +287,7 @@ export function PaymentTransactionProvider({
     cancelPaymentTransaction,
     failPaymentTransaction,
     clearPaymentTransactions,
+    syncPendingTransactions,
   ]);
 
   return (

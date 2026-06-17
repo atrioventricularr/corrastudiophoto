@@ -43,9 +43,36 @@ function getStatusClassName(status: CorraPaymentTransaction['status']): string {
   return 'bg-stone-100 text-stone-600';
 }
 
+
+function getSyncClassName(
+  status: CorraPaymentTransaction['syncStatus'],
+): string {
+  if (status === 'synced') {
+    return 'bg-emerald-100 text-emerald-700';
+  }
+
+  if (status === 'syncing') {
+    return 'bg-blue-100 text-blue-700';
+  }
+
+  if (status === 'failed') {
+    return 'bg-red-100 text-red-700';
+  }
+
+  if (status === 'skipped') {
+    return 'bg-amber-100 text-amber-700';
+  }
+
+  return 'bg-stone-100 text-stone-600';
+}
+
 export default function PaymentTransactionsPanel() {
-  const { transactions, currentTransaction, clearPaymentTransactions } =
-    usePaymentTransactions();
+  const {
+    transactions,
+    currentTransaction,
+    clearPaymentTransactions,
+    syncPendingTransactions,
+  } = usePaymentTransactions();
 
   const latestTransactions = transactions.slice(0, 10);
 
@@ -60,13 +87,23 @@ export default function PaymentTransactionsPanel() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={clearPaymentTransactions}
-          className="rounded-2xl border border-[var(--corra-border)] bg-white px-4 py-2 text-xs font-black"
-        >
-          Clear History
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={syncPendingTransactions}
+            className="rounded-2xl bg-[var(--corra-primary)] px-4 py-2 text-xs font-black text-white"
+          >
+            Sync Pending
+          </button>
+
+          <button
+            type="button"
+            onClick={clearPaymentTransactions}
+            className="rounded-2xl border border-[var(--corra-border)] bg-white px-4 py-2 text-xs font-black"
+          >
+            Clear History
+          </button>
+        </div>
       </div>
 
       {currentTransaction && (
@@ -88,6 +125,13 @@ export default function PaymentTransactionsPanel() {
             </span>
             <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-black text-stone-600">
               {formatRupiah(currentTransaction.amountIdr)}
+            </span>
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-black ${getSyncClassName(
+                currentTransaction.syncStatus || 'idle',
+              )}`}
+            >
+              Sync: {currentTransaction.syncStatus || 'idle'}
             </span>
           </div>
         </div>
@@ -116,6 +160,9 @@ export default function PaymentTransactionsPanel() {
                 </th>
                 <th className="px-4 py-3 font-black uppercase tracking-wider">
                   Code
+                </th>
+                <th className="px-4 py-3 font-black uppercase tracking-wider">
+                  Sync
                 </th>
               </tr>
             </thead>
@@ -147,6 +194,27 @@ export default function PaymentTransactionsPanel() {
                       transaction.failureReason ||
                       '-'}
                   </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded-full px-3 py-1 font-black ${getSyncClassName(
+                        transaction.syncStatus || 'idle',
+                      )}`}
+                    >
+                      {transaction.syncStatus || 'idle'}
+                    </span>
+
+                    {transaction.syncError && (
+                      <p className="mt-1 max-w-xs truncate text-[10px] font-bold text-red-600">
+                        {transaction.syncError}
+                      </p>
+                    )}
+
+                    {transaction.syncedAt && (
+                      <p className="mt-1 text-[10px] font-mono text-[var(--corra-muted)]">
+                        {formatDateTime(transaction.syncedAt)}
+                      </p>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -155,8 +223,8 @@ export default function PaymentTransactionsPanel() {
       )}
 
       <p className="mt-4 text-xs leading-relaxed text-[var(--corra-muted)]">
-        This is local development history only. Production transaction records
-        should sync to Supabase sessions/transactions table.
+        Transactions sync to Supabase booth_payment_transactions after payment
+        confirmation/cancellation. Failed sync can be retried manually.
       </p>
     </div>
   );

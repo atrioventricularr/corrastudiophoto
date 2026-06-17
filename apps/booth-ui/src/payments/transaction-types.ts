@@ -23,6 +23,9 @@ export type CorraPaymentTransaction = {
   confirmedAt?: string | null;
   cancelledAt?: string | null;
   metadata?: Record<string, unknown>;
+  syncStatus?: 'idle' | 'syncing' | 'synced' | 'failed' | 'skipped';
+  syncedAt?: string | null;
+  syncError?: string | null;
 };
 
 export type CreatePaymentTransactionInput = {
@@ -30,6 +33,9 @@ export type CreatePaymentTransactionInput = {
   amountIdr: number;
   merchantName: string;
   metadata?: Record<string, unknown>;
+  syncStatus?: 'idle' | 'syncing' | 'synced' | 'failed' | 'skipped';
+  syncedAt?: string | null;
+  syncError?: string | null;
 };
 
 export type ConfirmPaymentTransactionInput = {
@@ -37,6 +43,9 @@ export type ConfirmPaymentTransactionInput = {
   voucherCode?: string | null;
   confirmationCode?: string | null;
   metadata?: Record<string, unknown>;
+  syncStatus?: 'idle' | 'syncing' | 'synced' | 'failed' | 'skipped';
+  syncedAt?: string | null;
+  syncError?: string | null;
 };
 
 export type PaymentTransactionContextValue = {
@@ -58,4 +67,5 @@ export type PaymentTransactionContextValue = {
     reason?: string,
   ) => CorraPaymentTransaction | null;
   clearPaymentTransactions: () => void;
+  syncPendingTransactions: () => Promise<void>;
 };

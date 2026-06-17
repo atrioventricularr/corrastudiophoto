@@ -12,7 +12,13 @@ import {
 import { motion } from 'motion/react';
 import { playRetroBeep } from '../utils/audio';
 import { AdminSettings } from '../types';
-import { usePaymentSettings, usePaymentTransactions } from '../payments';
+import {
+  createDokuQris,
+  isCreateDokuQrisConfigured,
+  usePaymentSettings,
+  usePaymentTransactions,
+  type CreateDokuQrisResult,
+} from '../payments';
 
 interface PaymentScreenProps {
   adminSettings: AdminSettings;
@@ -95,6 +101,59 @@ function formatRupiah(value: number): string {
   }).format(value || 0);
 }
 
+
+function findFirstQrisLikeString(value: unknown): string {
+  if (!value) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.toLowerCase();
+
+    if (
+      normalized.includes('000201') ||
+      normalized.includes('qris') ||
+      normalized.includes('qr')
+    ) {
+      return value;
+    }
+
+    return '';
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findFirstQrisLikeString(item);
+
+      if (found) {
+        return found;
+      }
+    }
+
+    return '';
+  }
+
+  if (typeof value === 'object') {
+    for (const item of Object.values(value as Record<string, unknown>)) {
+      const found = findFirstQrisLikeString(item);
+
+      if (found) {
+        return found;
+      }
+    }
+  }
+
+  return '';
+}
+
+function extractDokuQrisText(result: CreateDokuQrisResult | null): string {
+  if (!result?.doku) {
+    return '';
+  }
+
+  return findFirstQrisLikeString(result.doku);
+}
+
 function getPaymentSuccessCode(provider: string): string {
   if (provider === 'STATIC_QRIS') {
     return 'STATIC_QRIS_CONFIRMED';
@@ -134,6 +193,11 @@ export default function PaymentScreen({
   const [voucherError, setVoucherError] = useState(false);
   const [voucherSuccess, setVoucherSuccess] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isGeneratingDokuQris, setIsGeneratingDokuQris] = useState(false);
+  const [dokuQrisResult, setDokuQrisResult] =
+    useState<CreateDokuQrisResult | null>(null);
+  const [dokuQrisError, setDokuQrisError] = useState('');
+  const dokuQrisText = extractDokuQrisText(dokuQrisResult);
 
   const activeVouchers = useMemo(() => {
     return Array.isArray(adminSettings.activeVouchers)
@@ -235,7 +299,38 @@ export default function PaymentScreen({
     }
   };
 
+  const handleGenerateDokuQris = async () => {
+    setDokuQrisError('');
+    setIsGeneratingDokuQris(true);
+
+    try {
+      const transactionId =
+        transactionIdRef.current || `CORRA-${Date.now()}`;
+
+      const result = await createDokuQris({
+        transactionId,
+        amountIdr: effectivePrice,
+        merchantId: paymentConfig.doku.merchantId || undefined,
+        environment: paymentConfig.doku.environment,
+        validityMinutes: 15,
+      });
+
+      setDokuQrisResult(result);
+
+      if (!result.ok) {
+        setDokuQrisError(result.error || 'Failed to generate DOKU QRIS.');
+      }
+    } finally {
+      setIsGeneratingDokuQris(false);
+    }
+  };
+
   const handleConfirmPayment = () => {
+    if (currentProvider === 'DOKU_QRIS' && !dokuQrisResult?.ok) {
+      setDokuQrisError('Generate DOKU QRIS first before confirming payment.');
+      return;
+    }
+
     playRetroBeep('success');
     setIsProcessingPayment(true);
 
@@ -377,15 +472,82 @@ export default function PaymentScreen({
             {currentProvider === 'DOKU_QRIS' && (
               <div className="w-full max-w-md rounded-3xl border border-blue-100 bg-blue-50 p-6 text-center text-blue-900">
                 <QrCode className="mx-auto mb-4 w-20 h-20" />
-                <p className="text-sm font-black">Dynamic QRIS Placeholder</p>
+                <p className="text-sm font-black">DOKU Dynamic QRIS</p>
                 <p className="mt-2 text-xs leading-relaxed">
-                  {dict.dokuInstruction}
+                  Generate QRIS dinamis untuk transaksi ini. Setelah QRIS dibuat,
+                  customer scan menggunakan aplikasi bank/e-wallet.
                 </p>
-                <p className="mt-3 text-[10px] font-bold uppercase tracking-wider">
-                  {paymentConfig.doku.environment} · Client ID{' '}
-                  {paymentConfig.doku.clientId ? 'set' : 'not set'} · Secret{' '}
-                  {paymentConfig.doku.isCredentialConfigured ? 'set' : 'not set'}
-                </p>
+
+                <div className="mt-4 rounded-2xl bg-white p-4 text-left text-xs">
+                  <p className="font-black">Status</p>
+                  <p className="mt-1 font-mono">
+                    Env: {paymentConfig.doku.environment} · Client ID{' '}
+                    {paymentConfig.doku.clientId ? 'set' : 'not set'} · Secret{' '}
+                    {paymentConfig.doku.isCredentialConfigured ? 'set' : 'not set'}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGenerateDokuQris}
+                  disabled={
+                    isGeneratingDokuQris ||
+                    !isCreateDokuQrisConfigured() ||
+                    !paymentConfig.doku.merchantId
+                  }
+                  className="mt-4 w-full rounded-2xl bg-blue-700 px-5 py-3 text-xs font-black text-white disabled:opacity-50"
+                >
+                  {isGeneratingDokuQris
+                    ? 'Generating QRIS...'
+                    : dokuQrisResult?.ok
+                      ? 'Regenerate DOKU QRIS'
+                      : 'Generate DOKU QRIS'}
+                </button>
+
+                {!paymentConfig.doku.merchantId && (
+                  <p className="mt-3 text-xs font-bold text-red-700">
+                    DOKU Merchant ID belum diisi di Admin Payment Settings.
+                  </p>
+                )}
+
+                {!isCreateDokuQrisConfigured() && (
+                  <p className="mt-3 text-xs font-bold text-red-700">
+                    VITE_CREATE_DOKU_QRIS_URL atau VITE_SUPABASE_ANON_KEY belum
+                    diatur di .env.local.
+                  </p>
+                )}
+
+                {dokuQrisError && (
+                  <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700">
+                    {dokuQrisError}
+                  </div>
+                )}
+
+                {dokuQrisResult?.ok && (
+                  <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-left text-xs text-emerald-900">
+                    <p className="font-black">DOKU QRIS Generated</p>
+                    <p className="mt-1 font-mono">
+                      Ref: {dokuQrisResult.request?.partnerReferenceNo ||
+                        dokuQrisResult.transactionId}
+                    </p>
+
+                    {dokuQrisText ? (
+                      <div className="mt-3 rounded-xl bg-white p-3">
+                        <p className="mb-1 font-black">QR Content</p>
+                        <p className="break-all font-mono text-[10px]">
+                          {dokuQrisText}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-3 rounded-xl bg-white p-3">
+                        <p className="font-black">Raw DOKU Response</p>
+                        <pre className="mt-2 max-h-36 overflow-auto whitespace-pre-wrap text-[10px]">
+                          {JSON.stringify(dokuQrisResult.doku, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -428,7 +590,7 @@ export default function PaymentScreen({
           <button
             id="btn-confirm-payment"
             onClick={handleConfirmPayment}
-            disabled={isProcessingPayment}
+            disabled={isProcessingPayment || (currentProvider === 'DOKU_QRIS' && !dokuQrisResult?.ok)}
             className="w-full bg-[var(--corra-text)] hover:bg-[var(--corra-primary)] text-white font-black py-3.5 rounded-2xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             <CheckCircle2 className="w-4 h-4 text-white fill-current" />

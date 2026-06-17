@@ -12,6 +12,7 @@ import {
 import { motion } from 'motion/react';
 import { playRetroBeep } from '../utils/audio';
 import { AdminSettings } from '../types';
+import QrCodeImage from './shared/QrCodeImage';
 import {
   createDokuQris,
   isCreateDokuQrisConfigured,
@@ -532,11 +533,26 @@ export default function PaymentScreen({
                     </p>
 
                     {dokuQrisText ? (
-                      <div className="mt-3 rounded-xl bg-white p-3">
-                        <p className="mb-1 font-black">QR Content</p>
-                        <p className="break-all font-mono text-[10px]">
-                          {dokuQrisText}
-                        </p>
+                      <div className="mt-3 rounded-2xl bg-white p-4 text-center">
+                        <p className="mb-3 font-black">Scan QRIS</p>
+
+                        <div className="mx-auto flex w-fit rounded-2xl border border-[var(--corra-border)] bg-white p-3 shadow-sm">
+                          <QrCodeImage
+                            value={dokuQrisText}
+                            size={220}
+                            alt="DOKU QRIS"
+                            className="rounded-xl bg-white object-contain"
+                          />
+                        </div>
+
+                        <details className="mt-3 text-left">
+                          <summary className="cursor-pointer text-xs font-black">
+                            Show QR Content
+                          </summary>
+                          <p className="mt-2 break-all rounded-xl bg-stone-50 p-3 font-mono text-[10px] text-stone-600">
+                            {dokuQrisText}
+                          </p>
+                        </details>
                       </div>
                     ) : (
                       <div className="mt-3 rounded-xl bg-white p-3">

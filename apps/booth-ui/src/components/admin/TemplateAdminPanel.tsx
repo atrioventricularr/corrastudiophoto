@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLayouts } from '../../layouts';
 import { TemplatePreviewCanvas } from '../templates';
+import { TemplateLayerListPanel } from './TemplateLayerListPanel';
 import { createPaperSnapshotFromLayout, createPhotoTemplate, createTemplateAsset, createTemplateLayer, useTemplates } from '../../templates';
 
 export function TemplateAdminPanel() {
@@ -365,6 +366,10 @@ export function TemplateAdminPanel() {
             />
           </div>
         )}
+      </div>
+
+      <div className="mt-5">
+        <TemplateLayerListPanel />
       </div>
 
       <div className="mt-5 rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center">

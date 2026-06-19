@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLayouts } from '../../layouts';
 import { usePrinterProfile } from '../../print';
-import { renderFinalTemplateToCanvas, renderPrintReadyTemplateToCanvas } from '../../render';
+import { renderFinalTemplateToCanvas, renderPrintReadyTemplateToCanvas, type SlotPhotoMap } from '../../render';
 import { useTemplates } from '../../templates';
 
 type RenderMode = 'raw' | 'print-ready';
@@ -16,15 +16,19 @@ export function TemplateRenderPreviewPanel() {
   const [error, setError] = useState<string>('');
   const [isRendering, setIsRendering] = useState(false);
   const [renderMode, setRenderMode] = useState<RenderMode>('print-ready');
+  const [samplePhotosBySlotId, setSamplePhotosBySlotId] =
+    useState<SlotPhotoMap>({});
+
+  const renderLayout =
+    layouts.find((item) => item.id === activeTemplate.layoutId) ||
+    activeLayout;
 
   const handleRenderPreview = async () => {
     setIsRendering(true);
     setError('');
 
     try {
-      const layout =
-        layouts.find((item) => item.id === activeTemplate.layoutId) ||
-        activeLayout;
+      const layout = renderLayout;
 
       const result =
         renderMode === 'print-ready'
@@ -32,6 +36,7 @@ export function TemplateRenderPreviewPanel() {
               template: activeTemplate,
               layout,
               printerProfile,
+              photosBySlotId: samplePhotosBySlotId,
               showEmptySlotPlaceholder: true,
             })
           : await renderFinalTemplateToCanvas({
@@ -73,6 +78,43 @@ export function TemplateRenderPreviewPanel() {
     link.remove();
   };
 
+  const handleSamplePhotoUpload = (
+    slotId: string,
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      window.alert('Sample photo harus image.');
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') return;
+
+      setSamplePhotosBySlotId((current) => ({
+        ...current,
+        [slotId]: reader.result as string,
+      }));
+    };
+
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const handleRemoveSamplePhoto = (slotId: string) => {
+    setSamplePhotosBySlotId((current) => {
+      const next = { ...current };
+      delete next[slotId];
+      return next;
+    });
+  };
+
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -96,6 +138,57 @@ export function TemplateRenderPreviewPanel() {
         >
           {isRendering ? 'Rendering...' : 'Render Preview PNG'}
         </button>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-500">
+          Sample Photos
+        </p>
+        <p className="mt-1 text-xs font-bold text-emerald-700">
+          Upload foto dummy per slot untuk tes hasil render final.
+        </p>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {renderLayout.slots.map((slot) => (
+            <div key={slot.id} className="rounded-2xl bg-white p-3">
+              <p className="text-sm font-black text-slate-800">
+                #{slot.captureOrder} · {slot.name}
+              </p>
+
+              {samplePhotosBySlotId[slot.id] && (
+                <img
+                  src={samplePhotosBySlotId[slot.id]}
+                  alt={slot.name}
+                  className="mt-3 h-24 w-full rounded-xl object-cover"
+                />
+              )}
+
+              <div className="mt-3 flex gap-2">
+                <label className="flex-1 cursor-pointer rounded-xl bg-emerald-600 px-3 py-2 text-center text-[11px] font-black text-white">
+                  Upload
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) =>
+                      handleSamplePhotoUpload(slot.id, event)
+                    }
+                    className="hidden"
+                  />
+                </label>
+
+                {samplePhotosBySlotId[slot.id] && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSamplePhoto(slot.id)}
+                    className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-black text-red-700"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">

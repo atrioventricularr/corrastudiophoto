@@ -40,6 +40,22 @@ export function TemplateRenderPreviewPanel() {
     }
   };
 
+  const handleDownloadPreview = () => {
+    if (!previewUrl) return;
+
+    const safeName = activeTemplate.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    const link = document.createElement('a');
+    link.href = previewUrl;
+    link.download = `${safeName || 'corra-template'}-render-preview.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -76,6 +92,16 @@ export function TemplateRenderPreviewPanel() {
           <p className="mb-3 text-xs font-black uppercase tracking-wider text-slate-400">
             {renderInfo}
           </p>
+          <div className="mb-3 flex justify-end">
+            <button
+              type="button"
+              onClick={handleDownloadPreview}
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700"
+            >
+              Download PNG
+            </button>
+          </div>
+
           <img
             src={previewUrl}
             alt="Rendered template preview"

@@ -115,6 +115,7 @@ async function drawSlotPhoto(
   photoUrl: string,
   canvasWidth: number,
   canvasHeight: number,
+  mirrorFinalOutput: boolean,
 ) {
   const image = await loadImage(photoUrl);
 
@@ -130,6 +131,12 @@ async function drawSlotPhoto(
   context.translate(-(x + width / 2), -(y + height / 2));
 
   clipSlotPath(context, slot, x, y, width, height);
+
+  if (mirrorFinalOutput) {
+    context.translate(x + width / 2, y + height / 2);
+    context.scale(-1, 1);
+    context.translate(-(x + width / 2), -(y + height / 2));
+  }
 
   if (slot.cropMode === 'contain') {
     drawContain(context, image, x, y, width, height);
@@ -231,7 +238,14 @@ export async function renderFinalTemplateToCanvas(
     const photoUrl = options.photosBySlotId?.[slot.id];
 
     if (photoUrl) {
-      await drawSlotPhoto(context, slot, photoUrl, widthPx, heightPx);
+      await drawSlotPhoto(
+        context,
+        slot,
+        photoUrl,
+        widthPx,
+        heightPx,
+        Boolean(options.mirrorFinalOutput),
+      );
     } else if (options.showEmptySlotPlaceholder) {
       drawEmptySlotPlaceholder(context, slot, widthPx, heightPx);
     }

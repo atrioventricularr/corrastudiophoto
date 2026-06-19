@@ -10,6 +10,7 @@ export type FinalRenderOptions = {
   showEmptySlotPlaceholder?: boolean;
   backgroundColor?: string;
   showCalibrationGuide?: boolean;
+  mirrorFinalOutput?: boolean;
 };
 
 export type FinalRenderResult = {

@@ -19,7 +19,7 @@ type RenderHistoryItem = {
 
 export function TemplateRenderPreviewPanel() {
   const { activeTemplate } = useTemplates();
-  const { layouts, activeLayout } = useLayouts();
+  const { layouts, activeLayout, guideSettings } = useLayouts();
   const { printerProfile } = usePrinterProfile();
 
   const [previewUrl, setPreviewUrl] = useState<string>('');
@@ -56,12 +56,14 @@ export function TemplateRenderPreviewPanel() {
               photosBySlotId: samplePhotosBySlotId,
               showEmptySlotPlaceholder: true,
               showCalibrationGuide,
+              mirrorFinalOutput: guideSettings.mirrorFinalOutput,
             })
           : await renderFinalTemplateToCanvas({
               template: activeTemplate,
               layout,
               showEmptySlotPlaceholder: true,
               showCalibrationGuide,
+              mirrorFinalOutput: guideSettings.mirrorFinalOutput,
             });
 
       setRenderOutputKind('template-preview');
@@ -354,7 +356,7 @@ export function TemplateRenderPreviewPanel() {
           Render Status
         </p>
 
-        <div className="mt-3 grid gap-3 sm:grid-cols-4">
+        <div className="mt-3 grid gap-3 sm:grid-cols-5">
           <div className="rounded-2xl bg-white p-3">
             <p className="text-[10px] font-black uppercase text-cyan-400">
               Mode
@@ -379,6 +381,15 @@ export function TemplateRenderPreviewPanel() {
             </p>
             <p className="mt-1 truncate text-sm font-black text-cyan-950">
               {activeTemplate.name}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-white p-3">
+            <p className="text-[10px] font-black uppercase text-cyan-400">
+              Final Mirror
+            </p>
+            <p className="mt-1 text-sm font-black text-cyan-950">
+              {guideSettings.mirrorFinalOutput ? 'ON' : 'OFF'}
             </p>
           </div>
 

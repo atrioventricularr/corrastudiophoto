@@ -55,6 +55,10 @@ export function TemplateAdminPanel() {
     (asset) => asset.id === activeTemplate.frameOverlayAssetId,
   );
 
+  const backgroundAsset = activeTemplate.assets.find(
+    (asset) => asset.id === activeTemplate.backgroundAssetId,
+  );
+
   const handleFramePngUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -109,6 +113,54 @@ export function TemplateAdminPanel() {
     if (window.confirm(`Remove frame "${frameOverlayAsset.name}"?`)) {
       removeTemplateAsset(activeTemplate.id, frameOverlayAsset.id);
     }
+  };
+
+  const handleBackgroundUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      window.alert('Background harus file image.');
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') return;
+
+      const asset = createTemplateAsset({
+        kind: 'background',
+        source: 'local',
+        name: file.name,
+        url: reader.result,
+        mimeType: file.type,
+        fileSizeBytes: file.size,
+      });
+
+      const layer = createTemplateLayer({
+        name: 'Background',
+        assetId: asset.id,
+        kind: 'background',
+        zIndex: 0,
+        opacity: 1,
+        visible: true,
+      });
+
+      addTemplateAsset(activeTemplate.id, asset);
+      addTemplateLayer(activeTemplate.id, layer);
+      updateTemplate(activeTemplate.id, {
+        backgroundAssetId: asset.id,
+        status: 'draft',
+      });
+    };
+
+    reader.readAsDataURL(file);
+    event.target.value = '';
   };
 
   return (
@@ -366,6 +418,33 @@ export function TemplateAdminPanel() {
             />
           </div>
         )}
+      </div>
+
+      <div className="mt-5 rounded-3xl border border-purple-100 bg-purple-50 p-4">
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-400">
+          Background Image
+        </p>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <p className="text-sm font-black text-purple-950">
+              {backgroundAsset?.name || 'No background uploaded yet'}
+            </p>
+            <p className="mt-1 text-xs font-bold text-purple-700">
+              Background akan tampil di layer paling bawah.
+            </p>
+          </div>
+
+          <label className="cursor-pointer rounded-2xl bg-purple-600 px-5 py-3 text-center text-xs font-black text-white">
+            Upload Background
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={handleBackgroundUpload}
+              className="hidden"
+            />
+          </label>
+        </div>
       </div>
 
       <div className="mt-5">

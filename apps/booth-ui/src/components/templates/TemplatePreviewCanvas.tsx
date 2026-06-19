@@ -13,6 +13,16 @@ export function TemplatePreviewCanvas({
 
   const layout = layouts.find((item) => item.id === template.layoutId);
 
+  const backgroundLayer = template.layers.find(
+    (layer) =>
+      layer.assetId === template.backgroundAssetId &&
+      layer.kind === 'background',
+  );
+
+  const backgroundAsset = template.assets.find(
+    (asset) => asset.id === template.backgroundAssetId,
+  );
+
   const frameLayer = template.layers.find(
     (layer) =>
       layer.assetId === template.frameOverlayAssetId &&
@@ -21,6 +31,10 @@ export function TemplatePreviewCanvas({
 
   const frameAsset = template.assets.find(
     (asset) => asset.id === template.frameOverlayAssetId,
+  );
+
+  const showBackground = Boolean(
+    backgroundAsset?.url && (backgroundLayer?.visible ?? true),
   );
 
   const showFrame = Boolean(frameAsset?.url && (frameLayer?.visible ?? true));
@@ -55,6 +69,17 @@ export function TemplatePreviewCanvas({
               aspectRatio: `${template.paperSnapshot.canvasWidthPx} / ${template.paperSnapshot.canvasHeightPx}`,
             }}
           >
+            {showBackground && backgroundAsset?.url && (
+              <img
+                src={backgroundAsset.url}
+                alt={backgroundAsset.name}
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+                style={{
+                  opacity: backgroundLayer?.opacity ?? 1,
+                }}
+              />
+            )}
+
             <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(15,23,42,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.08)_1px,transparent_1px)] bg-[size:10%_10%]" />
 
             {layout?.slots.map((slot) => (

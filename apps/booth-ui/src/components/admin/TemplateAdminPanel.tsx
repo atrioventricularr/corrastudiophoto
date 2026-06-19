@@ -29,6 +29,21 @@ export function TemplateAdminPanel() {
     addTemplate(template);
   };
 
+  const handleDuplicateActiveTemplate = () => {
+    const now = new Date().toISOString();
+
+    addTemplate({
+      ...activeTemplate,
+      id: `template-copy-${Date.now()}`,
+      name: `${activeTemplate.name} Copy`,
+      customerFacingName: `${activeTemplate.customerFacingName} Copy`,
+      status: 'draft',
+      notes: `Duplicated from ${activeTemplate.name}.`,
+      createdAt: now,
+      updatedAt: now,
+    });
+  };
+
   return (
     <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -112,13 +127,21 @@ export function TemplateAdminPanel() {
           Template Actions
         </p>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-5">
+        <div className="mt-4 grid gap-3 sm:grid-cols-6">
           <button
             type="button"
             onClick={handleCreateTemplateFromActiveLayout}
             className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-black text-white"
           >
             Create From Layout
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDuplicateActiveTemplate}
+            className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs font-black text-blue-700"
+          >
+            Duplicate
           </button>
 
           <button

@@ -7,6 +7,7 @@ import { PaymentSettingsProvider, PaymentTransactionProvider } from './payments'
 import { SessionLifecycleProvider } from './sessions';
 import { PrinterProfileProvider } from './print';
 import { LayoutProvider } from './layouts';
+import { TemplateProvider } from './templates';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -16,8 +17,10 @@ createRoot(document.getElementById('root')!).render(
           <SessionLifecycleProvider>
             <PrinterProfileProvider>
               <LayoutProvider>
-                <ThemedBackground />
-                <App />
+                <TemplateProvider>
+                  <ThemedBackground />
+                  <App />
+                </TemplateProvider>
               </LayoutProvider>
             </PrinterProfileProvider>
           </SessionLifecycleProvider>

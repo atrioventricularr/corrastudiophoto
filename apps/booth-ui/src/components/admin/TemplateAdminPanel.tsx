@@ -11,6 +11,7 @@ export function TemplateAdminPanel() {
     setTemplateStatus,
     resetTemplates,
     addTemplate,
+    updateTemplate,
   } = useTemplates();
 
   const { activeLayout } = useLayouts();
@@ -80,6 +81,60 @@ export function TemplateAdminPanel() {
           ))}
         </select>
       </label>
+
+      <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+          Template Details
+        </p>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <label className="block">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+              Template Name
+            </span>
+            <input
+              value={activeTemplate.name}
+              onChange={(event) =>
+                updateTemplate(activeTemplate.id, {
+                  name: event.target.value,
+                })
+              }
+              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none"
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+              Customer-Facing Name
+            </span>
+            <input
+              value={activeTemplate.customerFacingName}
+              onChange={(event) =>
+                updateTemplate(activeTemplate.id, {
+                  customerFacingName: event.target.value,
+                })
+              }
+              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none"
+            />
+          </label>
+        </div>
+
+        <label className="mt-4 block">
+          <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+            Notes
+          </span>
+          <textarea
+            value={activeTemplate.notes || ''}
+            onChange={(event) =>
+              updateTemplate(activeTemplate.id, {
+                notes: event.target.value,
+              })
+            }
+            rows={3}
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none"
+          />
+        </label>
+      </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-3">
         <div className="rounded-3xl bg-slate-50 p-4">

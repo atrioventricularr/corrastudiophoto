@@ -13,6 +13,7 @@ type RenderHistoryItem = {
   mode: RenderMode;
   label: string;
   size: string;
+  dataUrl: string;
   createdAt: string;
 };
 
@@ -70,6 +71,7 @@ export function TemplateRenderPreviewPanel() {
         mode: renderMode,
         label: activeTemplate.name,
         size: `${result.widthPx} × ${result.heightPx}px`,
+        dataUrl: result.dataUrl,
       });
       setRenderInfo(
         `${result.widthPx} × ${result.heightPx}px ${
@@ -101,6 +103,7 @@ export function TemplateRenderPreviewPanel() {
       mode: renderMode,
       label: printerProfile.printerModel,
       size: `${result.widthPx} × ${result.heightPx}px`,
+      dataUrl: result.dataUrl,
     });
     setRenderInfo(`${result.widthPx} × ${result.heightPx}px calibration sheet PNG`);
     setError('');
@@ -187,6 +190,28 @@ export function TemplateRenderPreviewPanel() {
       },
       ...current,
     ].slice(0, 10));
+  };
+
+  const handleDownloadHistoryItem = (item: RenderHistoryItem) => {
+    const safeLabel = item.label
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    const link = document.createElement('a');
+    link.href = item.dataUrl;
+    link.download = `${safeLabel || 'corra-render'}-${item.mode}-${item.kind}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  const handleDownloadLatestRender = () => {
+    const latest = renderHistory[0];
+
+    if (!latest) return;
+
+    handleDownloadHistoryItem(latest);
   };
 
   const handleDownloadRenderMetadata = () => {
@@ -630,14 +655,25 @@ export function TemplateRenderPreviewPanel() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setRenderHistory([])}
-            disabled={renderHistory.length === 0}
-            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-black text-slate-600 disabled:opacity-40"
-          >
-            Clear History
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleDownloadLatestRender}
+              disabled={renderHistory.length === 0}
+              className="rounded-2xl bg-slate-950 px-4 py-2 text-xs font-black text-white disabled:opacity-40"
+            >
+              Download Latest
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setRenderHistory([])}
+              disabled={renderHistory.length === 0}
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-black text-slate-600 disabled:opacity-40"
+            >
+              Clear History
+            </button>
+          </div>
         </div>
 
         <div className="mt-3 space-y-2">
@@ -650,7 +686,7 @@ export function TemplateRenderPreviewPanel() {
           {renderHistory.map((item) => (
             <div
               key={item.id}
-              className="grid gap-2 rounded-2xl bg-slate-50 p-3 text-xs sm:grid-cols-[130px_120px_1fr_140px]"
+              className="grid gap-2 rounded-2xl bg-slate-50 p-3 text-xs sm:grid-cols-[130px_120px_1fr_140px_90px]"
             >
               <div className="font-black text-slate-700">
                 {item.kind === 'calibration-sheet'
@@ -669,6 +705,14 @@ export function TemplateRenderPreviewPanel() {
               <div className="font-mono text-[10px] font-bold text-slate-400">
                 {item.createdAt}
               </div>
+
+              <button
+                type="button"
+                onClick={() => handleDownloadHistoryItem(item)}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black text-slate-700"
+              >
+                Download
+              </button>
             </div>
           ))}
         </div>

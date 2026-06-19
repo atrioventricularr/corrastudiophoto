@@ -1,43 +1,101 @@
-import React, { useState } from 'react';
-import { 
-  Settings, 
-  Printer, 
-  Layers, 
-  CreditCard, 
-  Ticket, 
-  Timer,
-  Save, 
-  X, 
-  Plus, 
-  Trash2, 
-  Activity, 
-  AlertTriangle,
-  Info 
-} from 'lucide-react';
-import { motion } from 'motion/react';
-import { AdminSettings, FrameTemplate } from '../types';
-import { playRetroBeep } from '../utils/audio';
-import BrandAppearancePanel from './admin/BrandAppearancePanel';
-import AdminCredentialPanel from './admin/AdminCredentialPanel';
-import PaymentSettingsPanel from './admin/PaymentSettingsPanel';
-import PaymentTransactionsPanel from './admin/PaymentTransactionsPanel';
-import { SessionLifecyclePanel } from './admin/SessionLifecyclePanel';
-import { CameraSetupPanel } from './camera';
-import { AdminMobileSectionNav, AdminSidebar, type AdminSectionId } from './admin/AdminSidebar';
+#!/usr/bin/env bash
+set -euo pipefail
 
-interface AdminPanelProps {
-  settings: AdminSettings;
-  onUpdateSettings: (newSet: AdminSettings) => void;
-  templates: FrameTemplate[];
-  onAddTemplate: (tpl: FrameTemplate) => void;
-  onRemoveTemplate: (id: string) => void;
-  onClose: () => void;
-  lang: 'ID' | 'EN' | 'JP';
+FILE="apps/booth-ui/src/components/AdminPanel.tsx"
+BACKUP="apps/booth-ui/src/components/AdminPanel.legacy.backup.tsx"
+
+[ -f "$FILE" ] || {
+  echo "ERROR: AdminPanel.tsx not found"
+  exit 1
 }
 
+cp "$FILE" "$BACKUP"
 
+python - <<'PY'
+from pathlib import Path
+import re
 
+path = Path("apps/booth-ui/src/components/AdminPanel.tsx")
+text = path.read_text()
 
+start = text.find("export default function AdminPanel")
+if start == -1:
+    raise SystemExit("Could not find export default function AdminPanel")
+
+prefix = text[:start]
+
+def ensure_import(src: str, import_line: str, token: str) -> str:
+    if token in src:
+        return src
+
+    lines = src.splitlines()
+    insert_at = 0
+
+    for index, line in enumerate(lines):
+      if line.startswith("import "):
+        insert_at = index + 1
+
+    lines.insert(insert_at, import_line)
+    return "\n".join(lines) + "\n"
+
+prefix = prefix.replace(
+    "import React from 'react';",
+    "import React, { useState } from 'react';",
+)
+
+prefix = re.sub(
+    r"import React, \{([^}]*)\} from 'react';",
+    lambda m: "import React, {" + (
+        m.group(1) if "useState" in m.group(1) else m.group(1).strip() + ", useState"
+    ) + "} from 'react';",
+    prefix,
+    count=1,
+)
+
+prefix = ensure_import(
+    prefix,
+    "import { AdminMobileSectionNav, AdminSidebar, type AdminSectionId } from './admin/AdminSidebar';",
+    "AdminSidebar",
+)
+prefix = ensure_import(
+    prefix,
+    "import { CameraSetupPanel } from './camera';",
+    "CameraSetupPanel",
+)
+prefix = ensure_import(
+    prefix,
+    "import { PaymentSettingsPanel } from './admin/PaymentSettingsPanel';",
+    "PaymentSettingsPanel",
+)
+prefix = ensure_import(
+    prefix,
+    "import { PaymentTransactionsPanel } from './admin/PaymentTransactionsPanel';",
+    "PaymentTransactionsPanel",
+)
+prefix = ensure_import(
+    prefix,
+    "import { BrandAppearancePanel } from './admin/BrandAppearancePanel';",
+    "BrandAppearancePanel",
+)
+prefix = ensure_import(
+    prefix,
+    "import { AdminCredentialPanel } from './admin/AdminCredentialPanel';",
+    "AdminCredentialPanel",
+)
+prefix = ensure_import(
+    prefix,
+    "import { SessionLifecyclePanel } from './admin/SessionLifecyclePanel';",
+    "SessionLifecyclePanel",
+)
+
+# Remove old AdminPage helper if present in prefix, then add clean helper.
+prefix = re.sub(
+    r"\nfunction AdminPage\([\s\S]*?\n}\n\n",
+    "\n",
+    prefix,
+)
+
+helper = """
 function AdminPage({
   activeSection,
   section,
@@ -54,7 +112,9 @@ function AdminPage({
   return <div className="space-y-6">{children}</div>;
 }
 
-export default function AdminPanel({
+"""
+
+new_component = """export default function AdminPanel({
   settings,
   onUpdateSettings,
   templates,
@@ -246,3 +306,17 @@ export default function AdminPanel({
     </div>
   );
 }
+"""
+
+path.write_text(prefix + helper + new_component)
+print("REWROTE:", path)
+print("BACKUP:", "apps/booth-ui/src/components/AdminPanel.legacy.backup.tsx")
+PY
+
+echo ""
+echo "Check no legacy text:"
+grep -n "PRICING & PAYMENT SETUP\\|VOUCHERS & SECURITY\\|ADD CUSTOM PHOTO FRAMES\\|scrollIntoView\\|admin-section-" "$FILE" || true
+
+echo ""
+echo "Check page mode:"
+grep -n "AdminPage activeSection\\|section=\"hardware\"\\|section=\"billing\"\\|section=\"layout\"\\|section=\"template\"\\|section=\"branding\"\\|section=\"sessions\"" "$FILE" || true

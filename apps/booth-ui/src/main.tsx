@@ -6,6 +6,7 @@ import { BrandThemeProvider, ThemedBackground } from './branding';
 import { PaymentSettingsProvider, PaymentTransactionProvider } from './payments';
 import { SessionLifecycleProvider } from './sessions';
 import { PrinterProfileProvider } from './print';
+import { LayoutProvider } from './layouts';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,8 +15,10 @@ createRoot(document.getElementById('root')!).render(
         <PaymentTransactionProvider>
           <SessionLifecycleProvider>
             <PrinterProfileProvider>
-              <ThemedBackground />
-              <App />
+              <LayoutProvider>
+                <ThemedBackground />
+                <App />
+              </LayoutProvider>
             </PrinterProfileProvider>
           </SessionLifecycleProvider>
         </PaymentTransactionProvider>

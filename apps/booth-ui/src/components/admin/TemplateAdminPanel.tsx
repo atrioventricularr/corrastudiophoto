@@ -36,6 +36,16 @@ export function TemplateAdminPanel() {
     addTemplate(template);
   };
 
+  const handleSyncTemplateFromActiveLayout = () => {
+    updateTemplate(activeTemplate.id, {
+      layoutId: activeLayout.id,
+      layoutName: activeLayout.name,
+      paperSnapshot: createPaperSnapshotFromLayout(activeLayout),
+      status: 'draft',
+      notes: `Synced from active layout: ${activeLayout.name}.`,
+    });
+  };
+
   const handleDuplicateActiveTemplate = () => {
     const now = new Date().toISOString();
 
@@ -312,13 +322,21 @@ export function TemplateAdminPanel() {
           Template Actions
         </p>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-7">
+        <div className="mt-4 grid gap-3 sm:grid-cols-8">
           <button
             type="button"
             onClick={handleCreateTemplateFromActiveLayout}
             className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-black text-white"
           >
             Create From Layout
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSyncTemplateFromActiveLayout}
+            className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-xs font-black text-indigo-700"
+          >
+            Sync Layout
           </button>
 
           <button

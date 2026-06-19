@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLayouts } from '../../layouts';
 import { usePrinterProfile } from '../../print';
-import { renderFinalTemplateToCanvas } from '../../render';
+import { renderPrintReadyTemplateToCanvas } from '../../render';
 import { useTemplates } from '../../templates';
 
 export function TemplateRenderPreviewPanel() {
@@ -23,14 +23,15 @@ export function TemplateRenderPreviewPanel() {
         layouts.find((item) => item.id === activeTemplate.layoutId) ||
         activeLayout;
 
-      const result = await renderFinalTemplateToCanvas({
+      const result = await renderPrintReadyTemplateToCanvas({
         template: activeTemplate,
         layout,
+        printerProfile,
         showEmptySlotPlaceholder: true,
       });
 
       setPreviewUrl(result.dataUrl);
-      setRenderInfo(`${result.widthPx} × ${result.heightPx}px PNG`);
+      setRenderInfo(`${result.widthPx} × ${result.heightPx}px print-ready PNG`);
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -69,7 +70,7 @@ export function TemplateRenderPreviewPanel() {
             Render Preview PNG
           </h4>
           <p className="mt-1 text-xs font-bold text-slate-500">
-            Tes output final dengan placeholder slot foto.
+            Tes output final print-ready dengan placeholder slot foto dan printer profile aktif.
           </p>
         </div>
 

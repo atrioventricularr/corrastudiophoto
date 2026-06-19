@@ -2,6 +2,7 @@ import React from 'react';
 import { useLayouts } from '../../layouts';
 import { LayoutPreviewCanvas } from '../layouts';
 import { LayoutSlotEditorPanel } from './LayoutSlotEditorPanel';
+import { LayoutActionsPanel } from './LayoutActionsPanel';
 
 function formatPercent(value: number): string {
   return `${Number(value).toFixed(1)}%`;
@@ -53,6 +54,10 @@ export function LayoutAdminPanel() {
           ))}
         </select>
       </label>
+
+      <div className="mt-5">
+        <LayoutActionsPanel />
+      </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-4">
         <div className="rounded-3xl bg-slate-50 p-4">

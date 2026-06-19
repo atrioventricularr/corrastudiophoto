@@ -5,3 +5,4 @@ export * from './capture-guide';
 export * from './CameraCaptureGuidePanel';
 export * from './CameraCaptureGuideProvider';
 export * from './CameraCountdownPanel';
+export * from './capture-frame';

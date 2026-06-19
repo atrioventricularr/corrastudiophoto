@@ -7,6 +7,15 @@ import { useTemplates } from '../../templates';
 type RenderMode = 'raw' | 'print-ready';
 type RenderOutputKind = 'template-preview' | 'calibration-sheet';
 
+type RenderHistoryItem = {
+  id: string;
+  kind: RenderOutputKind;
+  mode: RenderMode;
+  label: string;
+  size: string;
+  createdAt: string;
+};
+
 export function TemplateRenderPreviewPanel() {
   const { activeTemplate } = useTemplates();
   const { layouts, activeLayout } = useLayouts();
@@ -19,6 +28,7 @@ export function TemplateRenderPreviewPanel() {
   const [renderMode, setRenderMode] = useState<RenderMode>('print-ready');
   const [renderOutputKind, setRenderOutputKind] =
     useState<RenderOutputKind>('template-preview');
+  const [renderHistory, setRenderHistory] = useState<RenderHistoryItem[]>([]);
   const [showCalibrationGuide, setShowCalibrationGuide] = useState(false);
   const [samplePhotosBySlotId, setSamplePhotosBySlotId] =
     useState<SlotPhotoMap>({});
@@ -55,6 +65,12 @@ export function TemplateRenderPreviewPanel() {
 
       setRenderOutputKind('template-preview');
       setPreviewUrl(result.dataUrl);
+      addRenderHistory({
+        kind: 'template-preview',
+        mode: renderMode,
+        label: activeTemplate.name,
+        size: `${result.widthPx} × ${result.heightPx}px`,
+      });
       setRenderInfo(
         `${result.widthPx} × ${result.heightPx}px ${
           renderMode === 'print-ready' ? 'print-ready' : 'raw template'
@@ -80,6 +96,12 @@ export function TemplateRenderPreviewPanel() {
 
     setRenderOutputKind('calibration-sheet');
     setPreviewUrl(result.dataUrl);
+    addRenderHistory({
+      kind: 'calibration-sheet',
+      mode: renderMode,
+      label: printerProfile.printerModel,
+      size: `${result.widthPx} × ${result.heightPx}px`,
+    });
     setRenderInfo(`${result.widthPx} × ${result.heightPx}px calibration sheet PNG`);
     setError('');
   };
@@ -154,6 +176,17 @@ export function TemplateRenderPreviewPanel() {
 
   const handleClearSamplePhotos = () => {
     setSamplePhotosBySlotId({});
+  };
+
+  const addRenderHistory = (item: Omit<RenderHistoryItem, 'id' | 'createdAt'>) => {
+    setRenderHistory((current) => [
+      {
+        ...item,
+        id: `render-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        createdAt: new Date().toLocaleString(),
+      },
+      ...current,
+    ].slice(0, 10));
   };
 
   const handleDownloadRenderMetadata = () => {
@@ -585,6 +618,61 @@ export function TemplateRenderPreviewPanel() {
           {error}
         </div>
       )}
+
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+              Render History
+            </p>
+            <p className="mt-1 text-xs font-bold text-slate-500">
+              10 hasil render terakhir di sesi admin ini.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setRenderHistory([])}
+            disabled={renderHistory.length === 0}
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-black text-slate-600 disabled:opacity-40"
+          >
+            Clear History
+          </button>
+        </div>
+
+        <div className="mt-3 space-y-2">
+          {renderHistory.length === 0 && (
+            <div className="rounded-2xl bg-slate-50 p-3 text-center text-xs font-bold text-slate-400">
+              No render history yet.
+            </div>
+          )}
+
+          {renderHistory.map((item) => (
+            <div
+              key={item.id}
+              className="grid gap-2 rounded-2xl bg-slate-50 p-3 text-xs sm:grid-cols-[130px_120px_1fr_140px]"
+            >
+              <div className="font-black text-slate-700">
+                {item.kind === 'calibration-sheet'
+                  ? 'Calibration'
+                  : 'Template'}
+              </div>
+
+              <div className="font-black text-slate-500">
+                {item.mode === 'print-ready' ? 'Print-Ready' : 'Raw'}
+              </div>
+
+              <div className="truncate font-bold text-slate-600">
+                {item.label} · {item.size}
+              </div>
+
+              <div className="font-mono text-[10px] font-bold text-slate-400">
+                {item.createdAt}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {previewUrl && (
         <div className="mt-4 rounded-2xl bg-slate-50 p-4">

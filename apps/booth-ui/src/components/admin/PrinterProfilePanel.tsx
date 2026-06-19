@@ -1,6 +1,9 @@
 import React from 'react';
 import {
+  findPaperPreset,
+  paperSizePresets,
   usePrinterProfile,
+  type PaperPresetId,
   type PrintOrientation,
   type PrinterType,
 } from '../../print';
@@ -116,6 +119,21 @@ export function PrinterProfilePanel() {
     });
   };
 
+  const applyPaperPreset = (presetId: PaperPresetId) => {
+    const preset = findPaperPreset(presetId);
+
+    updatePrinterProfile({
+      paperName: preset.name,
+      paperWidthInch: preset.widthInch,
+      paperHeightInch: preset.heightInch,
+      dpi: preset.recommendedDpi,
+      notes:
+        presetId === 'custom'
+          ? 'Custom paper size. Adjust width, height, and DPI manually.'
+          : `Paper preset applied: ${preset.name}.`,
+    });
+  };
+
   return (
     <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -216,6 +234,26 @@ export function PrinterProfilePanel() {
             }
             className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none"
           />
+        </label>
+
+        <label className="block">
+          <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+            Paper Preset
+          </span>
+          <select
+            value="custom"
+            onChange={(event) =>
+              applyPaperPreset(event.target.value as PaperPresetId)
+            }
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 outline-none"
+          >
+            <option value="custom">Choose preset...</option>
+            {paperSizePresets.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.name}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="block">

@@ -5,6 +5,7 @@ import { renderFinalTemplateToCanvas, renderPrintReadyTemplateToCanvas, renderPr
 import { useTemplates } from '../../templates';
 
 type RenderMode = 'raw' | 'print-ready';
+type RenderOutputKind = 'template-preview' | 'calibration-sheet';
 
 export function TemplateRenderPreviewPanel() {
   const { activeTemplate } = useTemplates();
@@ -16,6 +17,8 @@ export function TemplateRenderPreviewPanel() {
   const [error, setError] = useState<string>('');
   const [isRendering, setIsRendering] = useState(false);
   const [renderMode, setRenderMode] = useState<RenderMode>('print-ready');
+  const [renderOutputKind, setRenderOutputKind] =
+    useState<RenderOutputKind>('template-preview');
   const [showCalibrationGuide, setShowCalibrationGuide] = useState(false);
   const [samplePhotosBySlotId, setSamplePhotosBySlotId] =
     useState<SlotPhotoMap>({});
@@ -50,6 +53,7 @@ export function TemplateRenderPreviewPanel() {
               showCalibrationGuide,
             });
 
+      setRenderOutputKind('template-preview');
       setPreviewUrl(result.dataUrl);
       setRenderInfo(
         `${result.widthPx} × ${result.heightPx}px ${
@@ -74,6 +78,7 @@ export function TemplateRenderPreviewPanel() {
       printerProfile,
     });
 
+    setRenderOutputKind('calibration-sheet');
     setPreviewUrl(result.dataUrl);
     setRenderInfo(`${result.widthPx} × ${result.heightPx}px calibration sheet PNG`);
     setError('');
@@ -87,9 +92,24 @@ export function TemplateRenderPreviewPanel() {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
+    const safePrinter = printerProfile.printerModel
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    const safePaper = printerProfile.paperName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    const fileName =
+      renderOutputKind === 'calibration-sheet'
+        ? `corra-calibration-${safePrinter || 'printer'}-${safePaper || 'paper'}-${renderMode}.png`
+        : `${safeName || 'corra-template'}-${renderMode}-render-preview.png`;
+
     const link = document.createElement('a');
     link.href = previewUrl;
-    link.download = `${safeName || 'corra-template'}-render-preview.png`;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -578,7 +598,7 @@ export function TemplateRenderPreviewPanel() {
               onClick={handleDownloadPreview}
               className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700"
             >
-              Download PNG
+              {renderOutputKind === 'calibration-sheet' ? 'Download Calibration PNG' : 'Download PNG'}
             </button>
           </div>
 

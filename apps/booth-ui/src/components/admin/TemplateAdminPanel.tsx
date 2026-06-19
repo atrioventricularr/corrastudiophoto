@@ -16,6 +16,7 @@ export function TemplateAdminPanel() {
     removeTemplate,
     addTemplateAsset,
     addTemplateLayer,
+    removeTemplateAsset,
   } = useTemplates();
 
   const { activeLayout } = useLayouts();
@@ -99,6 +100,14 @@ export function TemplateAdminPanel() {
 
     reader.readAsDataURL(file);
     event.target.value = '';
+  };
+
+  const handleRemoveFramePng = () => {
+    if (!frameOverlayAsset) return;
+
+    if (window.confirm(`Remove frame "${frameOverlayAsset.name}"?`)) {
+      removeTemplateAsset(activeTemplate.id, frameOverlayAsset.id);
+    }
   };
 
   return (
@@ -324,15 +333,27 @@ export function TemplateAdminPanel() {
             </p>
           </div>
 
-          <label className="cursor-pointer rounded-2xl bg-blue-600 px-5 py-3 text-center text-xs font-black text-white">
-            Upload PNG
-            <input
-              type="file"
-              accept="image/png"
-              onChange={handleFramePngUpload}
-              className="hidden"
-            />
-          </label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <label className="cursor-pointer rounded-2xl bg-blue-600 px-5 py-3 text-center text-xs font-black text-white">
+              Upload PNG
+              <input
+                type="file"
+                accept="image/png"
+                onChange={handleFramePngUpload}
+                className="hidden"
+              />
+            </label>
+
+            {frameOverlayAsset && (
+              <button
+                type="button"
+                onClick={handleRemoveFramePng}
+                className="rounded-2xl border border-red-200 bg-white px-5 py-3 text-xs font-black text-red-700"
+              >
+                Remove Frame
+              </button>
+            )}
+          </div>
         </div>
 
         {frameOverlayAsset?.url && (

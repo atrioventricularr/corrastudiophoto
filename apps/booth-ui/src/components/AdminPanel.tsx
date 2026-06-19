@@ -25,6 +25,7 @@ import { SessionLifecyclePanel } from './admin/SessionLifecyclePanel';
 import { CameraSetupPanel } from './camera';
 import { AdminMobileSectionNav, AdminSidebar, type AdminSectionId } from './admin/AdminSidebar';
 import { PrinterProfilePanel } from './admin/PrinterProfilePanel';
+import { LayoutAdminPanel } from './admin/LayoutAdminPanel';
 
 interface AdminPanelProps {
   settings: AdminSettings;
@@ -146,17 +147,7 @@ export default function AdminPanel({
         </AdminPage>
 
         <AdminPage activeSection={activeSection} section="layout">
-          <section className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-5">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-              Layout
-            </p>
-            <h3 className="mt-1 text-2xl font-black text-slate-950">
-              Layout Builder
-            </h3>
-            <p className="mt-1 text-sm font-semibold text-slate-500">
-              Next: paper size, canvas size, photo slots, print area, guide overlay, dan printer profile.
-            </p>
-          </section>
+          <LayoutAdminPanel />
         </AdminPage>
 
         <AdminPage activeSection={activeSection} section="template">

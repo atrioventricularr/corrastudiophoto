@@ -1,5 +1,6 @@
 import React from 'react';
-import { useTemplates } from '../../templates';
+import { useLayouts } from '../../layouts';
+import { createPaperSnapshotFromLayout, createPhotoTemplate, useTemplates } from '../../templates';
 
 export function TemplateAdminPanel() {
   const {
@@ -9,7 +10,24 @@ export function TemplateAdminPanel() {
     setActiveTemplateId,
     setTemplateStatus,
     resetTemplates,
+    addTemplate,
   } = useTemplates();
+
+  const { activeLayout } = useLayouts();
+
+  const handleCreateTemplateFromActiveLayout = () => {
+    const template = createPhotoTemplate({
+      name: `${activeLayout.name} Template`,
+      customerFacingName: activeLayout.name,
+      layoutId: activeLayout.id,
+      layoutName: activeLayout.name,
+      paperSnapshot: createPaperSnapshotFromLayout(activeLayout),
+      tags: ['custom', activeLayout.paperPresetId],
+      notes: 'Created from active layout in admin.',
+    });
+
+    addTemplate(template);
+  };
 
   return (
     <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
@@ -94,7 +112,15 @@ export function TemplateAdminPanel() {
           Template Actions
         </p>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-4">
+        <div className="mt-4 grid gap-3 sm:grid-cols-5">
+          <button
+            type="button"
+            onClick={handleCreateTemplateFromActiveLayout}
+            className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-black text-white"
+          >
+            Create From Layout
+          </button>
+
           <button
             type="button"
             onClick={() => setTemplateStatus(activeTemplate.id, 'draft')}

@@ -1,0 +1,152 @@
+import {
+  createLayoutSlot,
+  createPhotoLayout,
+} from './layout-utils';
+import type {
+  LayoutGuideSettings,
+  PhotoLayout,
+} from './types';
+
+export const defaultLayoutGuideSettings: LayoutGuideSettings = {
+  showGrid: true,
+  showSlotGuide: true,
+  guideOpacity: 0.65,
+  mirrorPreview: true,
+  mirrorFinalOutput: false,
+};
+
+export const defaultPhotoLayouts: PhotoLayout[] = [
+  createPhotoLayout({
+    id: 'fixed-4r-four-grid',
+    name: '4R Four Grid',
+    mode: 'fixed',
+    paperPresetId: '4r',
+    orientation: 'portrait',
+    slots: [
+      createLayoutSlot({
+        id: 'slot-1',
+        name: 'Photo 1',
+        captureOrder: 1,
+        xPercent: 8,
+        yPercent: 6,
+        widthPercent: 40,
+        heightPercent: 40,
+        shape: 'rectangle',
+        guideLabel: 'Pose 1',
+      }),
+      createLayoutSlot({
+        id: 'slot-2',
+        name: 'Photo 2',
+        captureOrder: 2,
+        xPercent: 52,
+        yPercent: 6,
+        widthPercent: 40,
+        heightPercent: 40,
+        shape: 'rectangle',
+        guideLabel: 'Pose 2',
+      }),
+      createLayoutSlot({
+        id: 'slot-3',
+        name: 'Photo 3',
+        captureOrder: 3,
+        xPercent: 8,
+        yPercent: 54,
+        widthPercent: 40,
+        heightPercent: 40,
+        shape: 'rectangle',
+        guideLabel: 'Pose 3',
+      }),
+      createLayoutSlot({
+        id: 'slot-4',
+        name: 'Photo 4',
+        captureOrder: 4,
+        xPercent: 52,
+        yPercent: 54,
+        widthPercent: 40,
+        heightPercent: 40,
+        shape: 'rectangle',
+        guideLabel: 'Pose 4',
+      }),
+    ],
+    notes: 'Default 4R four-photo grid.',
+  }),
+
+  createPhotoLayout({
+    id: 'fixed-4r-two-strip',
+    name: '4R Two Strip',
+    mode: 'fixed',
+    paperPresetId: '4r',
+    orientation: 'portrait',
+    slots: [
+      createLayoutSlot({
+        id: 'strip-slot-1',
+        name: 'Top Photo',
+        captureOrder: 1,
+        xPercent: 10,
+        yPercent: 8,
+        widthPercent: 80,
+        heightPercent: 38,
+        shape: 'rectangle',
+        guideLabel: 'Top Pose',
+      }),
+      createLayoutSlot({
+        id: 'strip-slot-2',
+        name: 'Bottom Photo',
+        captureOrder: 2,
+        xPercent: 10,
+        yPercent: 54,
+        widthPercent: 80,
+        heightPercent: 38,
+        shape: 'rectangle',
+        guideLabel: 'Bottom Pose',
+      }),
+    ],
+    notes: 'Default 4R two-photo strip.',
+  }),
+
+  createPhotoLayout({
+    id: 'custom-a3-event-poster',
+    name: 'A3 Event Poster Custom',
+    mode: 'custom',
+    paperPresetId: 'a3',
+    orientation: 'portrait',
+    slots: [
+      createLayoutSlot({
+        id: 'a3-main',
+        name: 'Main Portrait',
+        captureOrder: 1,
+        xPercent: 10,
+        yPercent: 10,
+        widthPercent: 80,
+        heightPercent: 55,
+        shape: 'rectangle',
+        guideLabel: 'Main Pose',
+      }),
+      createLayoutSlot({
+        id: 'a3-small-left',
+        name: 'Small Left',
+        captureOrder: 2,
+        xPercent: 10,
+        yPercent: 70,
+        widthPercent: 37,
+        heightPercent: 20,
+        shape: 'rectangle',
+        guideLabel: 'Small Pose 1',
+      }),
+      createLayoutSlot({
+        id: 'a3-small-right',
+        name: 'Small Right',
+        captureOrder: 3,
+        xPercent: 53,
+        yPercent: 70,
+        widthPercent: 37,
+        heightPercent: 20,
+        shape: 'rectangle',
+        guideLabel: 'Small Pose 2',
+      }),
+    ],
+    notes: 'Custom A3 poster layout sample.',
+  }),
+];
+
+export const defaultActivePhotoLayout = defaultPhotoLayouts[0];

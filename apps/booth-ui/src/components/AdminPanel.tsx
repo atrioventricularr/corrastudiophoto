@@ -26,6 +26,7 @@ import { CameraSetupPanel } from './camera';
 import { AdminMobileSectionNav, AdminSidebar, type AdminSectionId } from './admin/AdminSidebar';
 import { PrinterProfilePanel } from './admin/PrinterProfilePanel';
 import { LayoutAdminPanel } from './admin/LayoutAdminPanel';
+import { TemplateAdminPanel } from './admin/TemplateAdminPanel';
 
 interface AdminPanelProps {
   settings: AdminSettings;
@@ -151,68 +152,7 @@ export default function AdminPanel({
         </AdminPage>
 
         <AdminPage activeSection={activeSection} section="template">
-          <section className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-5">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-              Template
-            </p>
-            <h3 className="mt-1 text-2xl font-black text-slate-950">
-              Template Manager
-            </h3>
-            <p className="mt-1 text-sm font-semibold text-slate-500">
-              Next: upload frame PNG, assign layout, paper size, printer profile, dan preview print.
-            </p>
-
-            <div className="mt-4 rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm font-black text-slate-700">
-                Current templates: {templateCount}
-              </p>
-              <p className="mt-1 text-xs font-semibold text-slate-400">
-                Legacy custom frame uploader disimpan dulu di backup file. Nanti kita ganti dengan Template Manager baru.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                const id = `template-${Date.now()}`;
-                onAddTemplate({
-                  id,
-                  name: `Template ${templateCount + 1}`,
-                } as FrameTemplate);
-              }}
-              className="mt-4 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white"
-            >
-              Add Placeholder Template
-            </button>
-
-            {templateCount > 0 && (
-              <div className="mt-4 space-y-2">
-                {templates.map((template) => (
-                  <div
-                    key={template.id}
-                    className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-black text-slate-800">
-                        {template.name || template.id}
-                      </p>
-                      <p className="font-mono text-xs font-semibold text-slate-400">
-                        {template.id}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => onRemoveTemplate(template.id)}
-                      className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-700"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          <TemplateAdminPanel />
         </AdminPage>
 
         <AdminPage activeSection={activeSection} section="branding">

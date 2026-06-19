@@ -12,6 +12,7 @@ export function TemplateAdminPanel() {
     resetTemplates,
     addTemplate,
     updateTemplate,
+    removeTemplate,
   } = useTemplates();
 
   const { activeLayout } = useLayouts();
@@ -182,7 +183,7 @@ export function TemplateAdminPanel() {
           Template Actions
         </p>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-6">
+        <div className="mt-4 grid gap-3 sm:grid-cols-7">
           <button
             type="button"
             onClick={handleCreateTemplateFromActiveLayout}
@@ -221,6 +222,18 @@ export function TemplateAdminPanel() {
             className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-black text-slate-600"
           >
             Archive
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm(`Delete template "${activeTemplate.name}"?`)) {
+                removeTemplate(activeTemplate.id);
+              }
+            }}
+            className="rounded-2xl border border-red-200 bg-white px-4 py-3 text-xs font-black text-red-700"
+          >
+            Delete
           </button>
 
           <button

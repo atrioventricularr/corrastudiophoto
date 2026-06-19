@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLayouts } from '../../layouts';
 import { LayoutPreviewCanvas } from '../layouts';
+import { LayoutSlotEditorPanel } from './LayoutSlotEditorPanel';
 
 function formatPercent(value: number): string {
   return `${Number(value).toFixed(1)}%`;
@@ -158,6 +159,10 @@ export function LayoutAdminPanel() {
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="mt-5">
+        <LayoutSlotEditorPanel />
       </div>
 
       <div className="mt-5 rounded-3xl border border-emerald-100 bg-emerald-50 p-4">

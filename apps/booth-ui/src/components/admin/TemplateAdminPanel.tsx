@@ -163,6 +163,14 @@ export function TemplateAdminPanel() {
     event.target.value = '';
   };
 
+  const handleRemoveBackground = () => {
+    if (!backgroundAsset) return;
+
+    if (window.confirm(`Remove background "${backgroundAsset.name}"?`)) {
+      removeTemplateAsset(activeTemplate.id, backgroundAsset.id);
+    }
+  };
+
   return (
     <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -435,15 +443,27 @@ export function TemplateAdminPanel() {
             </p>
           </div>
 
-          <label className="cursor-pointer rounded-2xl bg-purple-600 px-5 py-3 text-center text-xs font-black text-white">
-            Upload Background
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={handleBackgroundUpload}
-              className="hidden"
-            />
-          </label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <label className="cursor-pointer rounded-2xl bg-purple-600 px-5 py-3 text-center text-xs font-black text-white">
+              Upload Background
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleBackgroundUpload}
+                className="hidden"
+              />
+            </label>
+
+            {backgroundAsset && (
+              <button
+                type="button"
+                onClick={handleRemoveBackground}
+                className="rounded-2xl border border-red-200 bg-white px-5 py-3 text-xs font-black text-red-700"
+              >
+                Remove Background
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLayouts } from '../../layouts';
+import { TemplatePreviewCanvas } from '../templates';
 import { createPaperSnapshotFromLayout, createPhotoTemplate, createTemplateAsset, createTemplateLayer, useTemplates } from '../../templates';
 
 export function TemplateAdminPanel() {
@@ -136,6 +137,10 @@ export function TemplateAdminPanel() {
           ))}
         </select>
       </label>
+
+      <div className="mt-5">
+        <TemplatePreviewCanvas template={activeTemplate} />
+      </div>
 
       <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
         <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">

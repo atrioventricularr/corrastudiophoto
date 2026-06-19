@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLayouts } from '../../layouts';
+import { LayoutPreviewCanvas } from '../layouts';
 
 function formatPercent(value: number): string {
   return `${Number(value).toFixed(1)}%`;
@@ -100,6 +101,10 @@ export function LayoutAdminPanel() {
             photo slot
           </p>
         </div>
+      </div>
+
+      <div className="mt-5">
+        <LayoutPreviewCanvas layout={activeLayout} />
       </div>
 
       <div className="mt-5 rounded-3xl border border-blue-100 bg-blue-50 p-4">

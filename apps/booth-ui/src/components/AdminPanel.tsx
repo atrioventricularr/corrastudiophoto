@@ -24,6 +24,7 @@ import PaymentTransactionsPanel from './admin/PaymentTransactionsPanel';
 import { SessionLifecyclePanel } from './admin/SessionLifecyclePanel';
 import { CameraSetupPanel } from './camera';
 import { AdminMobileSectionNav, AdminSidebar, type AdminSectionId } from './admin/AdminSidebar';
+import { PrinterProfilePanel } from './admin/PrinterProfilePanel';
 
 interface AdminPanelProps {
   settings: AdminSettings;
@@ -72,13 +73,13 @@ export default function AdminPanel({
   const templateCount = Array.isArray(templates) ? templates.length : 0;
 
   return (
-    <div className="admin-sidebar-shell min-h-screen bg-slate-100 p-4 lg:pl-80">
+    <div className="admin-sidebar-shell h-screen overflow-hidden bg-slate-100 p-4 lg:pl-80">
       <AdminSidebar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
       />
 
-      <main className="mx-auto max-w-7xl">
+      <main className="mx-auto h-[calc(100vh-2rem)] max-w-7xl overflow-y-auto pr-2 pb-10">
         <AdminMobileSectionNav
           activeSection={activeSection}
           onSectionChange={setActiveSection}
@@ -110,18 +111,7 @@ export default function AdminPanel({
 
         <AdminPage activeSection={activeSection} section="hardware">
           <CameraSetupPanel />
-
-          <section className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-5">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-              Printer
-            </p>
-            <h3 className="mt-1 text-2xl font-black text-slate-950">
-              Printer Profile
-            </h3>
-            <p className="mt-1 text-sm font-semibold text-slate-500">
-              Next: DNP, printer rumahan, margin, offset, scale correction, dan borderless mode.
-            </p>
-          </section>
+          <PrinterProfilePanel />
         </AdminPage>
 
         <AdminPage activeSection={activeSection} section="billing">

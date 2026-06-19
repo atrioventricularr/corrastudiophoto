@@ -3,6 +3,7 @@ import { useLayouts } from '../../layouts';
 import { LayoutPreviewCanvas } from '../layouts';
 import { LayoutSlotEditorPanel } from './LayoutSlotEditorPanel';
 import { LayoutActionsPanel } from './LayoutActionsPanel';
+import { LayoutPaperSettingsPanel } from './LayoutPaperSettingsPanel';
 
 function formatPercent(value: number): string {
   return `${Number(value).toFixed(1)}%`;
@@ -57,6 +58,10 @@ export function LayoutAdminPanel() {
 
       <div className="mt-5">
         <LayoutActionsPanel />
+      </div>
+
+      <div className="mt-5">
+        <LayoutPaperSettingsPanel />
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-4">

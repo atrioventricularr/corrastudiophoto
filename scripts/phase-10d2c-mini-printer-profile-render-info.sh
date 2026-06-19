@@ -1,3 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+FILE="apps/booth-ui/src/components/admin/TemplateRenderPreviewPanel.tsx"
+
+[ -f "$FILE" ] || {
+  echo "ERROR: TemplateRenderPreviewPanel.tsx not found. Run 10D2A first."
+  exit 1
+}
+
+cat > "$FILE" <<'TSX'
 import React, { useState } from 'react';
 import { useLayouts } from '../../layouts';
 import { usePrinterProfile } from '../../print';
@@ -181,3 +192,6 @@ export function TemplateRenderPreviewPanel() {
     </section>
   );
 }
+TSX
+
+echo "10D2C mini done."

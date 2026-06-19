@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLayouts } from '../../layouts';
 import { usePrinterProfile } from '../../print';
-import { renderFinalTemplateToCanvas, renderPrintReadyTemplateToCanvas, type SlotPhotoMap } from '../../render';
+import { renderFinalTemplateToCanvas, renderPrintReadyTemplateToCanvas, renderPrinterCalibrationSheet, type SlotPhotoMap } from '../../render';
 import { useTemplates } from '../../templates';
 
 type RenderMode = 'raw' | 'print-ready';
@@ -65,6 +65,18 @@ export function TemplateRenderPreviewPanel() {
     } finally {
       setIsRendering(false);
     }
+  };
+
+  const handleRenderCalibrationSheet = () => {
+    const result = renderPrinterCalibrationSheet({
+      widthPx: activeTemplate.paperSnapshot.canvasWidthPx,
+      heightPx: activeTemplate.paperSnapshot.canvasHeightPx,
+      printerProfile,
+    });
+
+    setPreviewUrl(result.dataUrl);
+    setRenderInfo(`${result.widthPx} × ${result.heightPx}px calibration sheet PNG`);
+    setError('');
   };
 
   const handleDownloadPreview = () => {
@@ -215,14 +227,24 @@ export function TemplateRenderPreviewPanel() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleRenderPreview}
-          disabled={isRendering}
-          className="rounded-2xl bg-slate-950 px-5 py-3 text-xs font-black text-white disabled:opacity-50"
-        >
-          {isRendering ? 'Rendering...' : 'Render Preview PNG'}
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={handleRenderCalibrationSheet}
+            className="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-xs font-black text-red-700"
+          >
+            Calibration Sheet
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRenderPreview}
+            disabled={isRendering}
+            className="rounded-2xl bg-slate-950 px-5 py-3 text-xs font-black text-white disabled:opacity-50"
+          >
+            {isRendering ? 'Rendering...' : 'Render Preview PNG'}
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-4">

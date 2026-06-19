@@ -23,6 +23,8 @@ export function TemplateRenderPreviewPanel() {
     layouts.find((item) => item.id === activeTemplate.layoutId) ||
     activeLayout;
 
+  const samplePhotoCount = Object.keys(samplePhotosBySlotId).length;
+
   const handleRenderPreview = async () => {
     setIsRendering(true);
     setError('');
@@ -115,6 +117,10 @@ export function TemplateRenderPreviewPanel() {
     });
   };
 
+  const handleClearSamplePhotos = () => {
+    setSamplePhotosBySlotId({});
+  };
+
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -138,6 +144,50 @@ export function TemplateRenderPreviewPanel() {
         >
           {isRendering ? 'Rendering...' : 'Render Preview PNG'}
         </button>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50 p-4">
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-500">
+          Render Status
+        </p>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-4">
+          <div className="rounded-2xl bg-white p-3">
+            <p className="text-[10px] font-black uppercase text-cyan-400">
+              Mode
+            </p>
+            <p className="mt-1 text-sm font-black text-cyan-950">
+              {renderMode === 'print-ready' ? 'Print-Ready' : 'Raw Template'}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-white p-3">
+            <p className="text-[10px] font-black uppercase text-cyan-400">
+              Sample Photos
+            </p>
+            <p className="mt-1 text-sm font-black text-cyan-950">
+              {samplePhotoCount} / {renderLayout.slots.length}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-white p-3">
+            <p className="text-[10px] font-black uppercase text-cyan-400">
+              Template
+            </p>
+            <p className="mt-1 truncate text-sm font-black text-cyan-950">
+              {activeTemplate.name}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleClearSamplePhotos}
+            disabled={samplePhotoCount === 0}
+            className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-xs font-black text-cyan-700 disabled:opacity-40"
+          >
+            Clear Sample Photos
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">

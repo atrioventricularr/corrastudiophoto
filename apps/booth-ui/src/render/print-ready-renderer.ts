@@ -1,4 +1,5 @@
 import type { PrinterProfile } from '../print';
+import { drawCalibrationGuide } from './calibration-overlay';
 import {
   renderFinalTemplateToCanvas,
 } from './final-renderer';
@@ -14,7 +15,10 @@ export type PrintReadyRenderOptions = FinalRenderOptions & {
 export async function renderPrintReadyTemplateToCanvas(
   options: PrintReadyRenderOptions,
 ): Promise<FinalRenderResult> {
-  const baseResult = await renderFinalTemplateToCanvas(options);
+  const baseResult = await renderFinalTemplateToCanvas({
+    ...options,
+    showCalibrationGuide: false,
+  });
   const { printerProfile } = options;
 
   const canvas = document.createElement('canvas');
@@ -73,6 +77,13 @@ export async function renderPrintReadyTemplateToCanvas(
   );
 
   context.restore();
+
+  if (options.showCalibrationGuide) {
+    drawCalibrationGuide(context, canvas.width, canvas.height, {
+      label: 'PRINT READY',
+      marginPx: printerProfile.borderless ? undefined : printerProfile.marginPx,
+    });
+  }
 
   return {
     canvas,

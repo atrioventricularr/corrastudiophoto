@@ -16,6 +16,7 @@ export function TemplateRenderPreviewPanel() {
   const [error, setError] = useState<string>('');
   const [isRendering, setIsRendering] = useState(false);
   const [renderMode, setRenderMode] = useState<RenderMode>('print-ready');
+  const [showCalibrationGuide, setShowCalibrationGuide] = useState(false);
   const [samplePhotosBySlotId, setSamplePhotosBySlotId] =
     useState<SlotPhotoMap>({});
 
@@ -40,11 +41,13 @@ export function TemplateRenderPreviewPanel() {
               printerProfile,
               photosBySlotId: samplePhotosBySlotId,
               showEmptySlotPlaceholder: true,
+              showCalibrationGuide,
             })
           : await renderFinalTemplateToCanvas({
               template: activeTemplate,
               layout,
               showEmptySlotPlaceholder: true,
+              showCalibrationGuide,
             });
 
       setPreviewUrl(result.dataUrl);
@@ -220,6 +223,30 @@ export function TemplateRenderPreviewPanel() {
         >
           {isRendering ? 'Rendering...' : 'Render Preview PNG'}
         </button>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-red-500">
+              Calibration Guide
+            </p>
+            <p className="mt-1 text-xs font-bold text-red-700">
+              Overlay garis bantu untuk cek border, center, margin, offset, dan scale print.
+            </p>
+          </div>
+
+          <label className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-xs font-black text-red-700">
+            <input
+              type="checkbox"
+              checked={showCalibrationGuide}
+              onChange={(event) =>
+                setShowCalibrationGuide(event.target.checked)
+              }
+            />
+            Show Guide
+          </label>
+        </div>
       </div>
 
       <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50 p-4">

@@ -1,5 +1,6 @@
 import type { PhotoLayoutSlot } from '../layouts';
 import type { PhotoTemplateLayer, TemplateAssetRef } from '../templates';
+import { drawCalibrationGuide } from './calibration-overlay';
 import type { FinalRenderOptions, FinalRenderResult } from './final-render-types';
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -241,6 +242,12 @@ export async function renderFinalTemplateToCanvas(
     if (asset) {
       await drawTemplateLayer(context, layer, asset, widthPx, heightPx);
     }
+  }
+
+  if (options.showCalibrationGuide) {
+    drawCalibrationGuide(context, widthPx, heightPx, {
+      label: 'RAW TEMPLATE',
+    });
   }
 
   return {

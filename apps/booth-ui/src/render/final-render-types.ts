@@ -9,6 +9,7 @@ export type FinalRenderOptions = {
   photosBySlotId?: SlotPhotoMap;
   showEmptySlotPlaceholder?: boolean;
   backgroundColor?: string;
+  showCalibrationGuide?: boolean;
 };
 
 export type FinalRenderResult = {

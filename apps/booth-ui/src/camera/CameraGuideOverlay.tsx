@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLayouts } from '../layouts';
+import { useOptionalCameraCaptureGuide } from './CameraCaptureGuideProvider';
 
 export function CameraGuideOverlay() {
   const {
@@ -7,6 +8,8 @@ export function CameraGuideOverlay() {
     guideSettings,
   } = useLayouts();
 
+  const captureGuide = useOptionalCameraCaptureGuide();
+  const activeSlotId = captureGuide?.activeStep?.slot.id;
   const opacity = guideSettings.guideOpacity;
 
   if (!guideSettings.showGrid && !guideSettings.showSlotGuide) {
@@ -27,32 +30,44 @@ export function CameraGuideOverlay() {
       {guideSettings.showSlotGuide &&
         activeLayout.slots
           .filter((slot) => slot.showGuide)
-          .map((slot) => (
-            <div
-              key={slot.id}
-              className="absolute flex items-center justify-center border-2 border-dashed border-white bg-black/15 text-center shadow-[0_0_0_1px_rgba(0,0,0,0.25)]"
-              style={{
-                left: `${slot.xPercent}%`,
-                top: `${slot.yPercent}%`,
-                width: `${slot.widthPercent}%`,
-                height: `${slot.heightPercent}%`,
-                borderRadius:
-                  slot.shape === 'circle'
-                    ? '9999px'
-                    : `${slot.borderRadiusPercent}%`,
-                transform: `rotate(${slot.rotationDeg}deg)`,
-              }}
-            >
-              <div className="rounded-full bg-black/55 px-3 py-1">
-                <p className="text-[10px] font-black uppercase tracking-wider text-white">
-                  {slot.guideLabel || slot.name}
-                </p>
-                <p className="mt-0.5 font-mono text-[9px] font-bold text-white/75">
-                  #{slot.captureOrder}
-                </p>
+          .map((slot) => {
+            const isActive = slot.id === activeSlotId;
+
+            return (
+              <div
+                key={slot.id}
+                className={`absolute flex items-center justify-center border-2 border-dashed text-center shadow-[0_0_0_1px_rgba(0,0,0,0.25)] ${
+                  isActive
+                    ? 'border-yellow-300 bg-yellow-300/25 ring-4 ring-yellow-300/70'
+                    : 'border-white bg-black/15'
+                }`}
+                style={{
+                  left: `${slot.xPercent}%`,
+                  top: `${slot.yPercent}%`,
+                  width: `${slot.widthPercent}%`,
+                  height: `${slot.heightPercent}%`,
+                  borderRadius:
+                    slot.shape === 'circle'
+                      ? '9999px'
+                      : `${slot.borderRadiusPercent}%`,
+                  transform: `rotate(${slot.rotationDeg}deg)`,
+                }}
+              >
+                <div
+                  className={`rounded-full px-3 py-1 ${
+                    isActive ? 'bg-yellow-300 text-black' : 'bg-black/55 text-white'
+                  }`}
+                >
+                  <p className="text-[10px] font-black uppercase tracking-wider">
+                    {slot.guideLabel || slot.name}
+                  </p>
+                  <p className="mt-0.5 font-mono text-[9px] font-bold opacity-75">
+                    #{slot.captureOrder}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
     </div>
   );
 }

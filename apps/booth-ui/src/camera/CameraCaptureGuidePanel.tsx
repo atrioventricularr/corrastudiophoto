@@ -1,33 +1,23 @@
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useMemo } from 'react';
 import { useLayouts } from '../layouts';
-import {
-  getCaptureGuideStep,
-  getCaptureOrderedSlots,
-} from './capture-guide';
+import { getCaptureOrderedSlots } from './capture-guide';
+import { useCameraCaptureGuide } from './CameraCaptureGuideProvider';
 
 export function CameraCaptureGuidePanel() {
   const { activeLayout } = useLayouts();
-  const [activeIndex, setActiveIndex] = useState(0);
+  const {
+    activeIndex,
+    activeStep,
+    setActiveIndex,
+    previousStep,
+    nextStep,
+    resetStep,
+  } = useCameraCaptureGuide();
 
   const orderedSlots = useMemo(
     () => getCaptureOrderedSlots(activeLayout),
     [activeLayout],
   );
-
-  const activeStep = getCaptureGuideStep({
-    layout: activeLayout,
-    index: activeIndex,
-  });
-
-  useEffect(() => {
-    if (activeIndex > orderedSlots.length - 1) {
-      setActiveIndex(Math.max(0, orderedSlots.length - 1));
-    }
-  }, [activeIndex, orderedSlots.length]);
 
   if (!activeStep) {
     return (
@@ -61,14 +51,14 @@ export function CameraCaptureGuidePanel() {
           </p>
         </div>
 
-        <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-black text-white">
-          #{activeStep.slot.captureOrder}
+        <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-black text-white">
+          Active #{activeStep.slot.captureOrder}
         </span>
       </div>
 
       <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
         <div
-          className="h-full rounded-full bg-slate-950"
+          className="h-full rounded-full bg-blue-600"
           style={{
             width: `${((activeStep.index + 1) / activeStep.total) * 100}%`,
           }}
@@ -78,7 +68,7 @@ export function CameraCaptureGuidePanel() {
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
         <button
           type="button"
-          onClick={() => setActiveIndex((current) => Math.max(0, current - 1))}
+          onClick={previousStep}
           disabled={isFirst}
           className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700 disabled:opacity-40"
         >
@@ -87,7 +77,7 @@ export function CameraCaptureGuidePanel() {
 
         <button
           type="button"
-          onClick={() => setActiveIndex(0)}
+          onClick={resetStep}
           className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-black text-slate-700"
         >
           Reset
@@ -95,13 +85,9 @@ export function CameraCaptureGuidePanel() {
 
         <button
           type="button"
-          onClick={() =>
-            setActiveIndex((current) =>
-              Math.min(orderedSlots.length - 1, current + 1),
-            )
-          }
+          onClick={nextStep}
           disabled={isLast}
-          className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-black text-white disabled:opacity-40"
+          className="rounded-2xl bg-blue-600 px-4 py-3 text-xs font-black text-white disabled:opacity-40"
         >
           Next Pose
         </button>
@@ -114,7 +100,7 @@ export function CameraCaptureGuidePanel() {
             type="button"
             onClick={() => setActiveIndex(index)}
             className={`rounded-2xl px-4 py-3 text-left text-xs font-black ${
-              index === activeStep.index
+              index === activeIndex
                 ? 'bg-blue-600 text-white'
                 : 'bg-slate-50 text-slate-600'
             }`}

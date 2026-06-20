@@ -1,3 +1,123 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "========================================"
+echo " Phase 9B10 - Production Booth Mode Cleanup"
+echo "========================================"
+
+mkdir -p apps/booth-ui/src/booth
+
+cat > apps/booth-ui/src/booth/booth-mode-utils.ts <<'TS'
+export function getBoothUrlMode() {
+  if (typeof window === 'undefined') {
+    return {
+      isBoothMode: false,
+      isDevMode: false,
+      isKioskMode: false,
+    };
+  }
+
+  const url = new URL(window.location.href);
+  const hash = window.location.hash.toLowerCase();
+  const pathname = window.location.pathname.toLowerCase();
+
+  const isBoothMode =
+    url.searchParams.get('mode') === 'booth' ||
+    url.searchParams.get('booth') === '1' ||
+    hash === '#/booth' ||
+    hash === '#booth' ||
+    pathname.endsWith('/booth');
+
+  const isDevMode =
+    url.searchParams.get('dev') === '1' ||
+    url.searchParams.get('boothDev') === '1' ||
+    hash.includes('booth-dev');
+
+  const isKioskMode =
+    url.searchParams.get('kiosk') === '1' ||
+    url.searchParams.get('fullscreen') === '1';
+
+  return {
+    isBoothMode,
+    isDevMode,
+    isKioskMode,
+  };
+}
+
+export function goToAdminMode() {
+  if (typeof window === 'undefined') return;
+
+  const url = new URL(window.location.href);
+  url.searchParams.delete('mode');
+  url.searchParams.delete('booth');
+  url.searchParams.delete('dev');
+  url.searchParams.delete('boothDev');
+  url.searchParams.delete('kiosk');
+  url.searchParams.delete('fullscreen');
+  url.hash = '';
+
+  window.location.href = url.toString();
+}
+
+export function goToBoothMode(input: {
+  dev?: boolean;
+  kiosk?: boolean;
+} = {}) {
+  if (typeof window === 'undefined') return;
+
+  const url = new URL(window.location.href);
+  url.searchParams.set('mode', 'booth');
+
+  if (input.dev) {
+    url.searchParams.set('dev', '1');
+  } else {
+    url.searchParams.delete('dev');
+    url.searchParams.delete('boothDev');
+  }
+
+  if (input.kiosk) {
+    url.searchParams.set('kiosk', '1');
+  } else {
+    url.searchParams.delete('kiosk');
+    url.searchParams.delete('fullscreen');
+  }
+
+  url.hash = '';
+  window.location.href = url.toString();
+}
+
+export function buildBoothModeHref(input: {
+  dev?: boolean;
+  kiosk?: boolean;
+} = {}) {
+  if (typeof window === 'undefined') {
+    return '?mode=booth';
+  }
+
+  const url = new URL(window.location.href);
+  url.searchParams.set('mode', 'booth');
+
+  if (input.dev) {
+    url.searchParams.set('dev', '1');
+  } else {
+    url.searchParams.delete('dev');
+    url.searchParams.delete('boothDev');
+  }
+
+  if (input.kiosk) {
+    url.searchParams.set('kiosk', '1');
+  } else {
+    url.searchParams.delete('kiosk');
+    url.searchParams.delete('fullscreen');
+  }
+
+  url.hash = '';
+
+  return `${url.pathname}${url.search}`;
+}
+TS
+
+cat > apps/booth-ui/src/booth/BoothCustomerScreen.tsx <<'TSX'
 import React from 'react';
 import {
   boothFlowStepLabels,
@@ -226,3 +346,157 @@ export function BoothCustomerScreen({
     </div>
   );
 }
+TSX
+
+cat > apps/booth-ui/src/booth/BoothModePage.tsx <<'TSX'
+import React from 'react';
+import { BoothCustomerScreen } from './BoothCustomerScreen';
+import { BoothRuntimeProviders } from './BoothRuntimeProviders';
+import {
+  buildBoothModeHref,
+  getBoothUrlMode,
+  goToAdminMode,
+} from './booth-mode-utils';
+
+export function BoothModePage() {
+  const {
+    isDevMode,
+    isKioskMode,
+  } = getBoothUrlMode();
+
+  return (
+    <main
+      className={`min-h-screen bg-slate-950 text-white ${
+        isKioskMode ? 'p-0' : 'p-4 sm:p-6 lg:p-8'
+      }`}
+    >
+      <div className={`mx-auto flex flex-col gap-4 ${isKioskMode ? 'max-w-none' : 'max-w-7xl'}`}>
+        {!isKioskMode && (
+          <header className="flex flex-col gap-3 rounded-[2rem] border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-white/40">
+                Corra Booth
+              </p>
+              <h1 className="mt-1 text-2xl font-black">
+                Customer Booth Mode
+              </h1>
+              <p className="mt-1 text-sm font-semibold text-white/50">
+                {isDevMode
+                  ? 'Developer booth mode with step navigation enabled.'
+                  : 'Production booth mode with customer navigation locked.'}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {isDevMode ? (
+                <a
+                  href={buildBoothModeHref({ dev: false })}
+                  className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-black text-white"
+                >
+                  Production Mode
+                </a>
+              ) : (
+                <a
+                  href={buildBoothModeHref({ dev: true })}
+                  className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-black text-white"
+                >
+                  Dev Mode
+                </a>
+              )}
+
+              <a
+                href={buildBoothModeHref({ dev: isDevMode, kiosk: true })}
+                className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-black text-white"
+              >
+                Kiosk View
+              </a>
+
+              {isDevMode && (
+                <button
+                  type="button"
+                  onClick={goToAdminMode}
+                  className="rounded-2xl bg-white px-4 py-3 text-xs font-black text-slate-950"
+                >
+                  Back to Admin
+                </button>
+              )}
+            </div>
+          </header>
+        )}
+
+        <BoothRuntimeProviders>
+          <BoothCustomerScreen
+            showDevNavigation={isDevMode}
+            showHeader={!isKioskMode}
+          />
+        </BoothRuntimeProviders>
+      </div>
+    </main>
+  );
+}
+TSX
+
+cat > apps/booth-ui/src/booth/BoothFlowPreviewPanel.tsx <<'TSX'
+import React from 'react';
+import { BoothCustomerScreen } from './BoothCustomerScreen';
+import { BoothRuntimeProviders } from './BoothRuntimeProviders';
+import { buildBoothModeHref } from './booth-mode-utils';
+
+export function BoothFlowPreviewPanel() {
+  return (
+    <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-4">
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+          Customer-Facing Flow
+        </p>
+        <h4 className="mt-1 text-xl font-black text-slate-950">
+          Booth Flow Preview
+        </h4>
+        <p className="mt-1 text-sm font-semibold text-slate-500">
+          Preview admin selalu menampilkan developer controls. Production booth
+          mode menyembunyikan step navigation dari customer.
+        </p>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a
+            href={buildBoothModeHref({ dev: false })}
+            className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-black text-white"
+          >
+            Open Production Booth
+          </a>
+
+          <a
+            href={buildBoothModeHref({ dev: true })}
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"
+          >
+            Open Dev Booth
+          </a>
+
+          <a
+            href={buildBoothModeHref({ dev: false, kiosk: true })}
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"
+          >
+            Open Kiosk View
+          </a>
+        </div>
+      </div>
+
+      <BoothRuntimeProviders>
+        <BoothCustomerScreen showDevNavigation />
+      </BoothRuntimeProviders>
+    </section>
+  );
+}
+TSX
+
+INDEX="apps/booth-ui/src/booth/index.ts"
+grep -q "booth-mode-utils" "$INDEX" || cat >> "$INDEX" <<'TS'
+export * from './booth-mode-utils';
+TS
+
+echo ""
+echo "Relevant lines:"
+grep -R "showDevNavigation\\|Production Mode\\|Open Production Booth\\|booth-mode-utils\\|Developer Navigation" -n apps/booth-ui/src/booth || true
+
+echo ""
+echo "9B10 done."

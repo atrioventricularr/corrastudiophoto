@@ -1,6 +1,7 @@
 import React from 'react';
 import { BoothCustomerScreen } from './BoothCustomerScreen';
 import { BoothRuntimeProviders } from './BoothRuntimeProviders';
+import { buildBoothModeHref } from './booth-mode-utils';
 
 export function BoothFlowPreviewPanel() {
   return (
@@ -13,29 +14,36 @@ export function BoothFlowPreviewPanel() {
           Booth Flow Preview
         </h4>
         <p className="mt-1 text-sm font-semibold text-slate-500">
-          Fondasi layar customer. Mode ini sudah punya runtime provider sendiri
-          untuk camera capture, render output, dan print queue.
+          Preview admin selalu menampilkan developer controls. Production booth
+          mode menyembunyikan step navigation dari customer.
         </p>
 
         <div className="mt-3 flex flex-wrap gap-2">
           <a
-            href="?mode=booth"
+            href={buildBoothModeHref({ dev: false })}
             className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-black text-white"
           >
-            Open Booth Mode
+            Open Production Booth
           </a>
 
           <a
-            href="#/booth"
+            href={buildBoothModeHref({ dev: true })}
             className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"
           >
-            Open Hash Route
+            Open Dev Booth
+          </a>
+
+          <a
+            href={buildBoothModeHref({ dev: false, kiosk: true })}
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"
+          >
+            Open Kiosk View
           </a>
         </div>
       </div>
 
       <BoothRuntimeProviders>
-        <BoothCustomerScreen />
+        <BoothCustomerScreen showDevNavigation />
       </BoothRuntimeProviders>
     </section>
   );

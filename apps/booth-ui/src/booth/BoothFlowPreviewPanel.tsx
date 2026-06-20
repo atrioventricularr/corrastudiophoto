@@ -1,6 +1,6 @@
 import React from 'react';
 import { BoothCustomerScreen } from './BoothCustomerScreen';
-import { BoothFlowProvider } from './BoothFlowProvider';
+import { BoothRuntimeProviders } from './BoothRuntimeProviders';
 
 export function BoothFlowPreviewPanel() {
   return (
@@ -13,8 +13,8 @@ export function BoothFlowPreviewPanel() {
           Booth Flow Preview
         </h4>
         <p className="mt-1 text-sm font-semibold text-slate-500">
-          Fondasi layar customer. Nanti flow ini dipisah dari admin hardware page
-          dan dijadikan mode booth full-screen.
+          Fondasi layar customer. Mode ini sudah punya runtime provider sendiri
+          untuk camera capture, render output, dan print queue.
         </p>
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -34,9 +34,9 @@ export function BoothFlowPreviewPanel() {
         </div>
       </div>
 
-      <BoothFlowProvider>
+      <BoothRuntimeProviders>
         <BoothCustomerScreen />
-      </BoothFlowProvider>
+      </BoothRuntimeProviders>
     </section>
   );
 }

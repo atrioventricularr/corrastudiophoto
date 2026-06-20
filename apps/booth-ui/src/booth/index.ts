@@ -5,3 +5,5 @@ export * from './BoothFlowPreviewPanel';
 export * from './BoothModePage';
 export * from './BoothWelcomeStep';
 export * from './BoothPaymentStep';
+export * from './BoothRuntimeProviders';
+export * from './BoothCameraStep';

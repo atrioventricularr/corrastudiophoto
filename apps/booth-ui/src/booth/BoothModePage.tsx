@@ -1,6 +1,6 @@
 import React from 'react';
 import { BoothCustomerScreen } from './BoothCustomerScreen';
-import { BoothFlowProvider } from './BoothFlowProvider';
+import { BoothRuntimeProviders } from './BoothRuntimeProviders';
 
 function goToAdminMode() {
   if (typeof window === 'undefined') return;
@@ -40,9 +40,9 @@ export function BoothModePage() {
           </button>
         </header>
 
-        <BoothFlowProvider>
+        <BoothRuntimeProviders>
           <BoothCustomerScreen />
-        </BoothFlowProvider>
+        </BoothRuntimeProviders>
       </div>
     </main>
   );

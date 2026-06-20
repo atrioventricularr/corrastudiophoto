@@ -7,8 +7,11 @@ import {
 import { BoothCameraStep } from './BoothCameraStep';
 import { BoothCompleteStep } from './BoothCompleteStep';
 import { BoothDeliveryStep } from './BoothDeliveryStep';
+import { BoothLifecycleDebugPanel } from './BoothLifecycleDebugPanel';
 import { BoothPaymentStep } from './BoothPaymentStep';
 import { BoothReviewStep } from './BoothReviewStep';
+import { BoothStepErrorBoundary } from './BoothStepErrorBoundary';
+import { BoothStepGuard } from './BoothStepGuard';
 import { BoothWelcomeStep } from './BoothWelcomeStep';
 import { useBoothFlow } from './BoothFlowProvider';
 
@@ -188,6 +191,10 @@ export function BoothCustomerScreen({
               <p>Payment status: {paymentStatus}</p>
               <p>Session ID: {session?.id || 'none'}</p>
             </div>
+
+            <div className="mt-4">
+              <BoothLifecycleDebugPanel />
+            </div>
           </div>
         )}
 
@@ -220,7 +227,9 @@ export function BoothCustomerScreen({
             Current Customer Screen
           </p>
 
-          {renderStep(currentStep)}
+          <BoothStepErrorBoundary>
+            <BoothStepGuard>{renderStep(currentStep)}</BoothStepGuard>
+          </BoothStepErrorBoundary>
         </div>
       </div>
     </div>

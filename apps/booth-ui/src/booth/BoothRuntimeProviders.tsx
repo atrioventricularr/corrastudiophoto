@@ -6,6 +6,8 @@ import {
   CapturedFramesProvider,
 } from '../camera';
 import { BoothFlowProvider } from './BoothFlowProvider';
+import { BoothLifecycleAutoTracker } from './BoothLifecycleAutoTracker';
+import { BoothLifecycleLoggerProvider } from './BoothLifecycleLoggerProvider';
 
 type BoothRuntimeProvidersProps = {
   children: ReactNode;
@@ -16,15 +18,18 @@ export function BoothRuntimeProviders({
 }: BoothRuntimeProvidersProps) {
   return (
     <BoothFlowProvider>
-      <CameraCaptureGuideProvider>
-        <CapturedFramesProvider>
-          <CameraRenderOutputProvider>
-            <CameraPrintQueueProvider>
-              {children}
-            </CameraPrintQueueProvider>
-          </CameraRenderOutputProvider>
-        </CapturedFramesProvider>
-      </CameraCaptureGuideProvider>
+      <BoothLifecycleLoggerProvider>
+        <CameraCaptureGuideProvider>
+          <CapturedFramesProvider>
+            <CameraRenderOutputProvider>
+              <CameraPrintQueueProvider>
+                <BoothLifecycleAutoTracker />
+                {children}
+              </CameraPrintQueueProvider>
+            </CameraRenderOutputProvider>
+          </CapturedFramesProvider>
+        </CameraCaptureGuideProvider>
+      </BoothLifecycleLoggerProvider>
     </BoothFlowProvider>
   );
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { usePaymentSettings } from '../payments/PaymentSettingsProvider';
+import { useBoothLifecycleLogger } from './BoothLifecycleLoggerProvider';
 import { useBoothFlow } from './BoothFlowProvider';
 
 function formatIdr(value: unknown) {
@@ -69,14 +70,56 @@ function getPaymentSettingsObject(context: unknown): Record<string, unknown> {
   );
 }
 
+function getPaymentStatusStyle(status: string) {
+  if (status === 'confirmed') {
+    return {
+      card: 'bg-emerald-50',
+      label: 'text-emerald-500',
+      text: 'text-emerald-800',
+      badge: 'bg-emerald-600',
+    };
+  }
+
+  if (status === 'pending') {
+    return {
+      card: 'bg-blue-50',
+      label: 'text-blue-500',
+      text: 'text-blue-800',
+      badge: 'bg-blue-600',
+    };
+  }
+
+  if (status === 'failed') {
+    return {
+      card: 'bg-red-50',
+      label: 'text-red-500',
+      text: 'text-red-800',
+      badge: 'bg-red-600',
+    };
+  }
+
+  return {
+    card: 'bg-violet-50',
+    label: 'text-violet-500',
+    text: 'text-violet-800',
+    badge: 'bg-violet-600',
+  };
+}
+
 export function BoothPaymentStep() {
   const {
+    session,
     paymentStatus,
     markPaymentPending,
     markPaymentConfirmed,
     markPaymentFailed,
     setStep,
   } = useBoothFlow();
+
+  const {
+    recordBoothEvent,
+  } = useBoothLifecycleLogger();
+
   const paymentContext = usePaymentSettings() as unknown;
   const settings = getPaymentSettingsObject(paymentContext);
 
@@ -130,33 +173,100 @@ export function BoothPaymentStep() {
     '',
   );
 
+  const statusStyle = getPaymentStatusStyle(paymentStatus);
+
+  const handleStartPayment = () => {
+    markPaymentPending();
+
+    recordBoothEvent({
+      type: 'payment_pending',
+      summary: 'Customer started payment flow.',
+      sessionId: session?.id,
+      step: 'payment',
+      paymentStatus: 'pending',
+      payload: {
+        provider,
+        merchantName,
+        priceValue,
+      },
+    });
+  };
+
   const handleConfirmPayment = () => {
+    recordBoothEvent({
+      type: 'payment_confirmed',
+      summary: 'Payment manually confirmed from booth payment screen.',
+      sessionId: session?.id,
+      step: 'payment',
+      paymentStatus: 'confirmed',
+      payload: {
+        provider,
+        merchantName,
+        priceValue,
+      },
+    });
+
     markPaymentConfirmed();
   };
 
-  const handleSetPending = () => {
-    markPaymentPending();
+  const handleFailPayment = () => {
+    recordBoothEvent({
+      type: 'payment_failed',
+      summary: 'Payment manually marked as failed from booth payment screen.',
+      sessionId: session?.id,
+      step: 'payment',
+      paymentStatus: 'failed',
+      payload: {
+        provider,
+        merchantName,
+        priceValue,
+      },
+    });
+
+    markPaymentFailed();
   };
 
-  const handleSetFailed = () => {
-    markPaymentFailed();
+  const handleRetryPayment = () => {
+    markPaymentPending();
+
+    recordBoothEvent({
+      type: 'payment_pending',
+      summary: 'Customer retried payment flow.',
+      sessionId: session?.id,
+      step: 'payment',
+      paymentStatus: 'pending',
+      payload: {
+        provider,
+        merchantName,
+        priceValue,
+      },
+    });
   };
 
   return (
     <div className="mt-4 grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
       <aside className="rounded-[2rem] bg-white p-6 text-slate-950">
-        <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-500">
-          Payment
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-500">
+              Payment
+            </p>
 
-        <h4 className="mt-3 text-5xl font-black leading-none">
-          Complete Payment
-        </h4>
+            <h4 className="mt-3 text-5xl font-black leading-none">
+              Complete Payment
+            </h4>
+          </div>
+
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-black uppercase text-white ${statusStyle.badge}`}
+          >
+            {paymentStatus}
+          </span>
+        </div>
 
         <p className="mt-4 text-sm font-bold leading-relaxed text-slate-600">
-          Selesaikan pembayaran untuk membuka sesi camera. Untuk development,
-          tombol confirm masih manual sampai payment gate customer disambungkan
-          ke transaksi real-time.
+          Selesaikan pembayaran untuk membuka sesi camera. Status payment
+          sekarang punya state idle, pending, confirmed, dan failed.
         </p>
 
         <div className="mt-6 grid gap-3">
@@ -187,15 +297,54 @@ export function BoothPaymentStep() {
             </p>
           </div>
 
-          <div className="rounded-3xl bg-violet-50 p-4">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-500">
+          <div className={`rounded-3xl p-4 ${statusStyle.card}`}>
+            <p className={`text-xs font-black uppercase tracking-[0.2em] ${statusStyle.label}`}>
               Payment Status
             </p>
-            <p className="mt-2 text-lg font-black uppercase text-violet-800">
+            <p className={`mt-2 text-lg font-black uppercase ${statusStyle.text}`}>
               {paymentStatus}
             </p>
           </div>
         </div>
+
+        {paymentStatus === 'idle' && (
+          <div className="mt-6 rounded-3xl bg-violet-50 p-4">
+            <p className="text-sm font-black text-violet-900">
+              Ready to start payment.
+            </p>
+            <p className="mt-1 text-xs font-bold text-violet-700">
+              Customer akan masuk ke waiting state setelah menekan Start
+              Payment.
+            </p>
+          </div>
+        )}
+
+        {paymentStatus === 'pending' && (
+          <div className="mt-6 rounded-3xl bg-blue-50 p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-4 w-4 animate-pulse rounded-full bg-blue-600" />
+              <p className="text-sm font-black text-blue-900">
+                Waiting for payment confirmation...
+              </p>
+            </div>
+            <p className="mt-2 text-xs font-bold text-blue-700">
+              Untuk Static QRIS/manual mode, operator/customer bisa confirm
+              manual. Untuk DOKU nanti state ini bisa dipolling dari transaction
+              status.
+            </p>
+          </div>
+        )}
+
+        {paymentStatus === 'failed' && (
+          <div className="mt-6 rounded-3xl bg-red-50 p-4">
+            <p className="text-sm font-black text-red-900">
+              Payment failed or cancelled.
+            </p>
+            <p className="mt-1 text-xs font-bold text-red-700">
+              Customer bisa retry payment atau kembali ke welcome.
+            </p>
+          </div>
+        )}
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <button
@@ -206,32 +355,56 @@ export function BoothPaymentStep() {
             Back
           </button>
 
-          <button
-            type="button"
-            onClick={handleConfirmPayment}
-            className="rounded-3xl bg-slate-950 px-5 py-4 text-xs font-black uppercase tracking-[0.15em] text-white"
-          >
-            Confirm Payment
-          </button>
+          {paymentStatus === 'idle' && (
+            <button
+              type="button"
+              onClick={handleStartPayment}
+              className="rounded-3xl bg-slate-950 px-5 py-4 text-xs font-black uppercase tracking-[0.15em] text-white"
+            >
+              Start Payment
+            </button>
+          )}
+
+          {paymentStatus === 'pending' && (
+            <button
+              type="button"
+              onClick={handleConfirmPayment}
+              className="rounded-3xl bg-slate-950 px-5 py-4 text-xs font-black uppercase tracking-[0.15em] text-white"
+            >
+              Confirm Payment
+            </button>
+          )}
+
+          {paymentStatus === 'failed' && (
+            <button
+              type="button"
+              onClick={handleRetryPayment}
+              className="rounded-3xl bg-slate-950 px-5 py-4 text-xs font-black uppercase tracking-[0.15em] text-white"
+            >
+              Retry Payment
+            </button>
+          )}
         </div>
 
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={handleSetPending}
-            className="rounded-3xl border border-blue-200 bg-blue-50 px-5 py-4 text-xs font-black uppercase tracking-[0.15em] text-blue-700"
-          >
-            Mark Pending
-          </button>
+        {paymentStatus === 'pending' && (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={handleFailPayment}
+              className="rounded-3xl border border-red-200 bg-red-50 px-5 py-4 text-xs font-black uppercase tracking-[0.15em] text-red-700"
+            >
+              Mark Failed
+            </button>
 
-          <button
-            type="button"
-            onClick={handleSetFailed}
-            className="rounded-3xl border border-red-200 bg-red-50 px-5 py-4 text-xs font-black uppercase tracking-[0.15em] text-red-700"
-          >
-            Mark Failed
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={handleRetryPayment}
+              className="rounded-3xl border border-blue-200 bg-blue-50 px-5 py-4 text-xs font-black uppercase tracking-[0.15em] text-blue-700"
+            >
+              Restart Waiting
+            </button>
+          </div>
+        )}
       </aside>
 
       <section className="rounded-[2rem] border border-white/10 bg-white/10 p-6">
@@ -260,18 +433,20 @@ export function BoothPaymentStep() {
             <p className="text-5xl font-black">QRIS</p>
             <p className="mt-3 max-w-md text-sm font-semibold text-white/60">
               Static QRIS belum terdeteksi dari payment settings. Untuk sekarang
-              customer bisa dikonfirmasi manual lewat tombol Confirm Payment.
+              customer bisa dikonfirmasi manual lewat tombol Start Payment lalu
+              Confirm Payment.
             </p>
           </div>
         )}
 
         <div className="mt-4 rounded-3xl bg-black/20 p-4">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-white/40">
-            Dev Note
+            Payment Gate
           </p>
           <p className="mt-2 text-sm font-semibold text-white/60">
-            Next phase akan bikin payment gate state yang bisa menunggu status
-            transaksi confirmed sebelum lanjut ke camera.
+            Status pending adalah tempat nanti DOKU polling / webhook / admin
+            confirmation disambungkan. Saat confirmed, flow otomatis masuk ke
+            Camera step.
           </p>
         </div>
       </section>

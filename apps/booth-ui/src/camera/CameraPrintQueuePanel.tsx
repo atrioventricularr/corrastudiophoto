@@ -54,6 +54,7 @@ export function CameraPrintQueuePanel() {
   const [selectedPrinterName, setSelectedPrinterName] = useState('');
   const [printerListStatus, setPrinterListStatus] = useState('');
   const [silentPrint, setSilentPrint] = useState(false);
+  const [autoPrintNewJobs, setAutoPrintNewJobs] = useState(false);
 
   const bridgeAvailable = isCameraPrintBridgeAvailable();
 
@@ -97,10 +98,14 @@ export function CameraPrintQueuePanel() {
   const handleCreatePrintJob = () => {
     if (!printCandidateOutput) return;
 
-    enqueuePrintJob({
+    const job = enqueuePrintJob({
       output: printCandidateOutput,
       copies,
     });
+
+    if (autoPrintNewJobs) {
+      void handlePrintJob(job);
+    }
   };
 
   const handleCreateAndPrintJob = async () => {
@@ -194,6 +199,14 @@ export function CameraPrintQueuePanel() {
           <span className="rounded-full bg-purple-600 px-3 py-1 text-xs font-black text-white">
             {silentPrint ? 'Silent Print' : 'Print Dialog'}
           </span>
+
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-black text-white ${
+              autoPrintNewJobs ? 'bg-emerald-600' : 'bg-slate-500'
+            }`}
+          >
+            {autoPrintNewJobs ? 'Auto Print ON' : 'Auto Print OFF'}
+          </span>
         </div>
       </div>
 
@@ -271,6 +284,24 @@ export function CameraPrintQueuePanel() {
             {silentPrint
               ? 'Silent print akan langsung kirim ke selected/default printer tanpa dialog.'
               : 'Print dialog akan muncul dulu sebelum user konfirmasi print.'}
+          </p>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
+          <label className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3">
+            <input
+              type="checkbox"
+              checked={autoPrintNewJobs}
+              onChange={(event) => setAutoPrintNewJobs(event.target.checked)}
+            />
+            <span className="text-sm font-black text-emerald-900">
+              Auto-print new jobs
+            </span>
+          </label>
+
+          <p className="mt-3 text-xs font-bold text-emerald-700">
+            Kalau aktif, tombol Create Job akan langsung mengirim job ke Print
+            Bridge tanpa perlu klik Print via Bridge lagi.
           </p>
         </div>
       </div>

@@ -13,3 +13,5 @@ export * from './capture-completion';
 export * from './CameraCaptureCompletionPanel';
 export * from './CameraRenderOutputProvider';
 export * from './CameraRenderOutputPanel';
+export * from './CameraPrintQueueProvider';
+export * from './CameraPrintQueuePanel';

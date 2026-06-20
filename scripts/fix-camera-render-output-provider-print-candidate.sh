@@ -1,3 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROVIDER="apps/booth-ui/src/camera/CameraRenderOutputProvider.tsx"
+
+[ -f "$PROVIDER" ] || {
+  echo "ERROR: $PROVIDER not found."
+  exit 1
+}
+
+cat > "$PROVIDER" <<'TSX'
 import React, {
   createContext,
   useCallback,
@@ -159,3 +170,6 @@ export function useCameraRenderOutput(): CameraRenderOutputContextValue {
 
   return context;
 }
+TSX
+
+echo "Fixed CameraRenderOutputProvider print candidate context."

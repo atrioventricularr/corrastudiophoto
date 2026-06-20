@@ -9,3 +9,5 @@ export * from './capture-frame';
 export * from './CapturedFramesProvider';
 export * from './CapturedFramesPanel';
 export * from './CameraCapturedRenderPanel';
+export * from './capture-completion';
+export * from './CameraCaptureCompletionPanel';

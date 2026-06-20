@@ -16,6 +16,22 @@ export function BoothFlowPreviewPanel() {
           Fondasi layar customer. Nanti flow ini dipisah dari admin hardware page
           dan dijadikan mode booth full-screen.
         </p>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a
+            href="?mode=booth"
+            className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-black text-white"
+          >
+            Open Booth Mode
+          </a>
+
+          <a
+            href="#/booth"
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"
+          >
+            Open Hash Route
+          </a>
+        </div>
       </div>
 
       <BoothFlowProvider>

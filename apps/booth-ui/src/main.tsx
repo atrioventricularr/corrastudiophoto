@@ -1,6 +1,6 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
-import App from './App.tsx';
+import { AppModeRouter } from './AppModeRouter';
 import './index.css';
 import { BrandThemeProvider, ThemedBackground } from './branding';
 import { PaymentSettingsProvider, PaymentTransactionProvider } from './payments';
@@ -19,7 +19,7 @@ createRoot(document.getElementById('root')!).render(
               <LayoutProvider>
                 <TemplateProvider>
                   <ThemedBackground />
-                  <App />
+                  <AppModeRouter />
                 </TemplateProvider>
               </LayoutProvider>
             </PrinterProfileProvider>

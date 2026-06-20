@@ -70,7 +70,13 @@ function getPaymentSettingsObject(context: unknown): Record<string, unknown> {
 }
 
 export function BoothPaymentStep() {
-  const { setStep } = useBoothFlow();
+  const {
+    paymentStatus,
+    markPaymentPending,
+    markPaymentConfirmed,
+    markPaymentFailed,
+    setStep,
+  } = useBoothFlow();
   const paymentContext = usePaymentSettings() as unknown;
   const settings = getPaymentSettingsObject(paymentContext);
 
@@ -125,7 +131,15 @@ export function BoothPaymentStep() {
   );
 
   const handleConfirmPayment = () => {
-    setStep('camera');
+    markPaymentConfirmed();
+  };
+
+  const handleSetPending = () => {
+    markPaymentPending();
+  };
+
+  const handleSetFailed = () => {
+    markPaymentFailed();
   };
 
   return (
@@ -172,6 +186,15 @@ export function BoothPaymentStep() {
               {provider}
             </p>
           </div>
+
+          <div className="rounded-3xl bg-violet-50 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-500">
+              Payment Status
+            </p>
+            <p className="mt-2 text-lg font-black uppercase text-violet-800">
+              {paymentStatus}
+            </p>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -189,6 +212,24 @@ export function BoothPaymentStep() {
             className="rounded-3xl bg-slate-950 px-5 py-4 text-xs font-black uppercase tracking-[0.15em] text-white"
           >
             Confirm Payment
+          </button>
+        </div>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={handleSetPending}
+            className="rounded-3xl border border-blue-200 bg-blue-50 px-5 py-4 text-xs font-black uppercase tracking-[0.15em] text-blue-700"
+          >
+            Mark Pending
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSetFailed}
+            className="rounded-3xl border border-red-200 bg-red-50 px-5 py-4 text-xs font-black uppercase tracking-[0.15em] text-red-700"
+          >
+            Mark Failed
           </button>
         </div>
       </aside>

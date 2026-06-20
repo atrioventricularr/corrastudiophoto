@@ -26,6 +26,9 @@ export function BoothCustomerScreen() {
     isLastStep,
     startSession,
     setStep,
+    canAccessStep,
+    paymentStatus,
+    paymentConfirmed,
     goNext,
     goBack,
     completeSession,
@@ -67,6 +70,7 @@ export function BoothCustomerScreen() {
           {boothFlowSteps.map((step, index) => {
             const isActive = step === currentStep;
             const isDone = index < currentStepIndex;
+            const isLocked = !canAccessStep(step);
 
             return (
               <button
@@ -76,15 +80,39 @@ export function BoothCustomerScreen() {
                 className={`rounded-2xl px-3 py-3 text-xs font-black ${
                   isActive
                     ? 'bg-white text-slate-950'
-                    : isDone
-                      ? 'bg-emerald-400/90 text-slate-950'
-                      : 'bg-white/10 text-white/70'
+                    : isLocked
+                      ? 'bg-red-500/20 text-red-100'
+                      : isDone
+                        ? 'bg-emerald-400/90 text-slate-950'
+                        : 'bg-white/10 text-white/70'
                 }`}
               >
                 {index + 1}. {boothFlowStepLabels[step]}
+                {isLocked ? ' · Locked' : ''}
               </button>
             );
           })}
+        </div>
+
+        <div className="mt-4 rounded-3xl border border-white/10 bg-black/20 p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-white/40">
+                Payment Gate
+              </p>
+              <p className="mt-1 text-sm font-bold text-white/70">
+                Status: <span className="uppercase">{paymentStatus}</span>
+              </p>
+            </div>
+
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-black text-white ${
+                paymentConfirmed ? 'bg-emerald-600' : 'bg-amber-500'
+              }`}
+            >
+              {paymentConfirmed ? 'Camera Unlocked' : 'Camera Locked'}
+            </span>
+          </div>
         </div>
 
         <div className="mt-6 rounded-3xl bg-white/10 p-5">

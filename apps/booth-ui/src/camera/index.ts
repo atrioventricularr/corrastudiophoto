@@ -8,3 +8,4 @@ export * from './CameraCountdownPanel';
 export * from './capture-frame';
 export * from './CapturedFramesProvider';
 export * from './CapturedFramesPanel';
+export * from './CameraCapturedRenderPanel';

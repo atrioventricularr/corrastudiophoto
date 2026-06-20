@@ -8,3 +8,5 @@ export * from './BoothPaymentStep';
 export * from './BoothRuntimeProviders';
 export * from './BoothCameraStep';
 export * from './BoothReviewStep';
+export * from './BoothDeliveryStep';
+export * from './BoothCompleteStep';

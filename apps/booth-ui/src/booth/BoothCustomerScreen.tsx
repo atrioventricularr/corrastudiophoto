@@ -9,6 +9,8 @@ import { BoothWelcomeStep } from './BoothWelcomeStep';
 import { BoothPaymentStep } from './BoothPaymentStep';
 import { BoothCameraStep } from './BoothCameraStep';
 import { BoothReviewStep } from './BoothReviewStep';
+import { BoothDeliveryStep } from './BoothDeliveryStep';
+import { BoothCompleteStep } from './BoothCompleteStep';
 
 const stepDescriptions: Record<BoothFlowStep, string> = {
   welcome: 'Customer mulai dari layar sambutan sebelum masuk ke pembayaran.',
@@ -130,23 +132,9 @@ export function BoothCustomerScreen() {
 
           {currentStep === 'review' && <BoothReviewStep />}
 
-          {currentStep === 'delivery' && (
-            <div className="mt-4">
-              <h4 className="text-4xl font-black">Print or Download</h4>
-              <p className="mt-2 text-sm font-semibold text-white/70">
-                Customer bisa pilih print atau delivery QR.
-              </p>
-            </div>
-          )}
+          {currentStep === 'delivery' && <BoothDeliveryStep />}
 
-          {currentStep === 'complete' && (
-            <div className="mt-4">
-              <h4 className="text-4xl font-black">Thank You!</h4>
-              <p className="mt-2 text-sm font-semibold text-white/70">
-                Session selesai. Booth siap reset ke welcome screen.
-              </p>
-            </div>
-          )}
+          {currentStep === 'complete' && <BoothCompleteStep />}
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-4">

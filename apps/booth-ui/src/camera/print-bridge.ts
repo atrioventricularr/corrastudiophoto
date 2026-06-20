@@ -15,6 +15,7 @@ export type CameraPrintBridgeInput = {
   templateName: string;
   renderMode: string;
   printerName?: string;
+  silent?: boolean;
 };
 
 export type CameraPrintBridgeResult = {

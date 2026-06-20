@@ -53,6 +53,7 @@ export function CameraPrintQueuePanel() {
   const [printers, setPrinters] = useState<CameraPrinterInfo[]>([]);
   const [selectedPrinterName, setSelectedPrinterName] = useState('');
   const [printerListStatus, setPrinterListStatus] = useState('');
+  const [silentPrint, setSilentPrint] = useState(false);
 
   const bridgeAvailable = isCameraPrintBridgeAvailable();
 
@@ -134,6 +135,7 @@ export function CameraPrintQueuePanel() {
       templateName: job.templateName,
       renderMode: job.renderMode,
       printerName: selectedPrinterName || undefined,
+      silent: silentPrint,
     });
 
     if (result.ok) {
@@ -188,6 +190,10 @@ export function CameraPrintQueuePanel() {
               {selectedPrinterName}
             </span>
           )}
+
+          <span className="rounded-full bg-purple-600 px-3 py-1 text-xs font-black text-white">
+            {silentPrint ? 'Silent Print' : 'Print Dialog'}
+          </span>
         </div>
       </div>
 
@@ -229,6 +235,44 @@ export function CameraPrintQueuePanel() {
         <p className="mt-3 text-xs font-bold text-slate-500">
           {printerListStatus}
         </p>
+
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3">
+          <p className="text-xs font-black uppercase tracking-wider text-slate-400">
+            Print Mode
+          </p>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setSilentPrint(false)}
+              className={`rounded-2xl px-4 py-3 text-xs font-black ${
+                !silentPrint
+                  ? 'bg-slate-950 text-white'
+                  : 'border border-slate-200 bg-slate-50 text-slate-700'
+              }`}
+            >
+              Show Print Dialog
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSilentPrint(true)}
+              className={`rounded-2xl px-4 py-3 text-xs font-black ${
+                silentPrint
+                  ? 'bg-slate-950 text-white'
+                  : 'border border-slate-200 bg-slate-50 text-slate-700'
+              }`}
+            >
+              Silent Print
+            </button>
+          </div>
+
+          <p className="mt-3 text-xs font-bold text-slate-500">
+            {silentPrint
+              ? 'Silent print akan langsung kirim ke selected/default printer tanpa dialog.'
+              : 'Print dialog akan muncul dulu sebelum user konfirmasi print.'}
+          </p>
+        </div>
       </div>
 
       {!bridgeAvailable && (

@@ -1,3 +1,96 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "========================================"
+echo " Phase 9A3Q - UI Print Bridge Foundation"
+echo "========================================"
+
+mkdir -p apps/booth-ui/src/camera
+
+cat > apps/booth-ui/src/camera/print-bridge.ts <<'TS'
+export type CameraPrintBridgeInput = {
+  jobId: string;
+  dataUrl: string;
+  widthPx: number;
+  heightPx: number;
+  copies: number;
+  templateName: string;
+  renderMode: string;
+};
+
+export type CameraPrintBridgeResult = {
+  ok: boolean;
+  jobId?: string;
+  printerName?: string;
+  message?: string;
+  error?: string;
+};
+
+type CorraPrintBridge = {
+  printImageDataUrl?: (
+    input: CameraPrintBridgeInput,
+  ) => Promise<CameraPrintBridgeResult>;
+};
+
+type CorraWindow = Window & {
+  corra?: {
+    print?: CorraPrintBridge;
+  };
+};
+
+export function getCameraPrintBridge(): CorraPrintBridge | null {
+  if (typeof window === 'undefined') return null;
+
+  const maybeWindow = window as CorraWindow;
+
+  return maybeWindow.corra?.print || null;
+}
+
+export function isCameraPrintBridgeAvailable(): boolean {
+  return Boolean(getCameraPrintBridge()?.printImageDataUrl);
+}
+
+export async function printImageThroughBridge(
+  input: CameraPrintBridgeInput,
+): Promise<CameraPrintBridgeResult> {
+  const bridge = getCameraPrintBridge();
+
+  if (!bridge?.printImageDataUrl) {
+    return {
+      ok: false,
+      jobId: input.jobId,
+      error:
+        'Electron print bridge is not available. Run inside Electron after the preload/main print handler is added.',
+    };
+  }
+
+  try {
+    return await bridge.printImageDataUrl(input);
+  } catch (error) {
+    return {
+      ok: false,
+      jobId: input.jobId,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Unknown print bridge error.',
+    };
+  }
+}
+TS
+
+grep -q "print-bridge" apps/booth-ui/src/camera/index.ts || cat >> apps/booth-ui/src/camera/index.ts <<'TS'
+export * from './print-bridge';
+TS
+
+PANEL="apps/booth-ui/src/camera/CameraPrintQueuePanel.tsx"
+
+[ -f "$PANEL" ] || {
+  echo "ERROR: $PANEL not found. Run 9A3P first."
+  exit 1
+}
+
+cat > "$PANEL" <<'TSX'
 import React, { useState } from 'react';
 import {
   isCameraPrintBridgeAvailable,
@@ -327,3 +420,11 @@ export function CameraPrintQueuePanel() {
     </section>
   );
 }
+TSX
+
+echo ""
+echo "Relevant lines:"
+grep -R "printImageThroughBridge\\|Print via Bridge\\|Bridge ready\\|Bridge missing" -n apps/booth-ui/src/camera || true
+
+echo ""
+echo "9A3Q done."

@@ -15,3 +15,4 @@ export * from './CameraRenderOutputProvider';
 export * from './CameraRenderOutputPanel';
 export * from './CameraPrintQueueProvider';
 export * from './CameraPrintQueuePanel';
+export * from './print-bridge';

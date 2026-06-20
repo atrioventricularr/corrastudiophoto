@@ -6,3 +6,5 @@ export * from './CameraCaptureGuidePanel';
 export * from './CameraCaptureGuideProvider';
 export * from './CameraCountdownPanel';
 export * from './capture-frame';
+export * from './CapturedFramesProvider';
+export * from './CapturedFramesPanel';

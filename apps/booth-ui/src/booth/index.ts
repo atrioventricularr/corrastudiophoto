@@ -7,3 +7,4 @@ export * from './BoothWelcomeStep';
 export * from './BoothPaymentStep';
 export * from './BoothRuntimeProviders';
 export * from './BoothCameraStep';
+export * from './BoothReviewStep';

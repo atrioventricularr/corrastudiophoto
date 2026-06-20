@@ -8,6 +8,7 @@ import { useBoothFlow } from './BoothFlowProvider';
 import { BoothWelcomeStep } from './BoothWelcomeStep';
 import { BoothPaymentStep } from './BoothPaymentStep';
 import { BoothCameraStep } from './BoothCameraStep';
+import { BoothReviewStep } from './BoothReviewStep';
 
 const stepDescriptions: Record<BoothFlowStep, string> = {
   welcome: 'Customer mulai dari layar sambutan sebelum masuk ke pembayaran.',
@@ -127,14 +128,7 @@ export function BoothCustomerScreen() {
 
           {currentStep === 'camera' && <BoothCameraStep />}
 
-          {currentStep === 'review' && (
-            <div className="mt-4">
-              <h4 className="text-4xl font-black">Review Your Photo</h4>
-              <p className="mt-2 text-sm font-semibold text-white/70">
-                Hasil final render akan tampil di sini.
-              </p>
-            </div>
-          )}
+          {currentStep === 'review' && <BoothReviewStep />}
 
           {currentStep === 'delivery' && (
             <div className="mt-4">

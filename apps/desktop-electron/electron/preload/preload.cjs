@@ -29,6 +29,8 @@ contextBridge.exposeInMainWorld("corraDesktop", {
     electronRuntime.contextBridge.exposeInMainWorld('corraPrintBridge', {
       printImageDataUrl: (input) =>
         electronRuntime.ipcRenderer.invoke('corra:print-image-data-url', input),
+      listPrinters: () =>
+        electronRuntime.ipcRenderer.invoke('corra:list-printers'),
     });
   } catch (error) {
     console.error('[corra] failed to expose print bridge', error);

@@ -1,3 +1,121 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "========================================"
+echo " Phase 9A3S - Printer List + Selected Printer"
+echo "========================================"
+
+BRIDGE="apps/booth-ui/src/camera/print-bridge.ts"
+PANEL="apps/booth-ui/src/camera/CameraPrintQueuePanel.tsx"
+
+[ -f "$BRIDGE" ] || {
+  echo "ERROR: $BRIDGE not found. Run 9A3Q/9A3R first."
+  exit 1
+}
+
+[ -f "$PANEL" ] || {
+  echo "ERROR: $PANEL not found. Run 9A3P first."
+  exit 1
+}
+
+cat > "$BRIDGE" <<'TS'
+export type CameraPrinterInfo = {
+  name: string;
+  displayName?: string;
+  description?: string;
+  status?: number;
+  isDefault?: boolean;
+};
+
+export type CameraPrintBridgeInput = {
+  jobId: string;
+  dataUrl: string;
+  widthPx: number;
+  heightPx: number;
+  copies: number;
+  templateName: string;
+  renderMode: string;
+  printerName?: string;
+};
+
+export type CameraPrintBridgeResult = {
+  ok: boolean;
+  jobId?: string;
+  printerName?: string;
+  message?: string;
+  error?: string;
+};
+
+type CorraPrintBridge = {
+  printImageDataUrl?: (
+    input: CameraPrintBridgeInput,
+  ) => Promise<CameraPrintBridgeResult>;
+  listPrinters?: () => Promise<CameraPrinterInfo[]>;
+};
+
+type CorraWindow = Window & {
+  corra?: {
+    print?: CorraPrintBridge;
+  };
+  corraPrintBridge?: CorraPrintBridge;
+};
+
+export function getCameraPrintBridge(): CorraPrintBridge | null {
+  if (typeof window === 'undefined') return null;
+
+  const maybeWindow = window as CorraWindow;
+
+  return maybeWindow.corra?.print || maybeWindow.corraPrintBridge || null;
+}
+
+export function isCameraPrintBridgeAvailable(): boolean {
+  return Boolean(getCameraPrintBridge()?.printImageDataUrl);
+}
+
+export async function listPrintersThroughBridge(): Promise<CameraPrinterInfo[]> {
+  const bridge = getCameraPrintBridge();
+
+  if (!bridge?.listPrinters) {
+    return [];
+  }
+
+  try {
+    return await bridge.listPrinters();
+  } catch {
+    return [];
+  }
+}
+
+export async function printImageThroughBridge(
+  input: CameraPrintBridgeInput,
+): Promise<CameraPrintBridgeResult> {
+  const bridge = getCameraPrintBridge();
+
+  if (!bridge?.printImageDataUrl) {
+    return {
+      ok: false,
+      jobId: input.jobId,
+      error:
+        'Electron print bridge is not available. Run inside Electron after the preload/main print handler is added.',
+    };
+  }
+
+  try {
+    return await bridge.printImageDataUrl(input);
+  } catch (error) {
+    return {
+      ok: false,
+      jobId: input.jobId,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Unknown print bridge error.',
+    };
+  }
+}
+TS
+
+cat > "$PANEL" <<'TSX'
 import React, {
   useEffect,
   useState,
@@ -137,19 +255,13 @@ export function CameraPrintQueuePanel() {
     });
 
     if (result.ok) {
-      updatePrintJobStatus(job.id, 'completed', {
-        printerName: result.printerName,
-        resultMessage:
-          result.message ||
-          (result.printerName
-            ? `Print sent to ${result.printerName}.`
-            : 'Print completed via bridge.'),
-      });
+      updatePrintJobStatus(job.id, 'completed');
     } else {
-      updatePrintJobStatus(job.id, 'failed', {
-        printerName: result.printerName,
-        errorMessage: result.error || 'Print bridge failed.',
-      });
+      updatePrintJobStatus(
+        job.id,
+        'failed',
+        result.error || 'Print bridge failed.',
+      );
     }
 
     setPrintingJobId('');
@@ -376,30 +488,6 @@ export function CameraPrintQueuePanel() {
                 Created {formatTime(job.createdAt)}
               </p>
 
-              {job.startedAt && (
-                <p className="mt-1 text-xs font-bold text-slate-400">
-                  Started {formatTime(job.startedAt)}
-                </p>
-              )}
-
-              {job.completedAt && (
-                <p className="mt-1 text-xs font-bold text-slate-400">
-                  Finished {formatTime(job.completedAt)}
-                </p>
-              )}
-
-              {job.printerName && (
-                <p className="mt-2 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">
-                  Printer: {job.printerName}
-                </p>
-              )}
-
-              {job.resultMessage && (
-                <p className="mt-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
-                  {job.resultMessage}
-                </p>
-              )}
-
               {job.errorMessage && (
                 <p className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
                   {job.errorMessage}
@@ -419,11 +507,7 @@ export function CameraPrintQueuePanel() {
 
               <button
                 type="button"
-                onClick={() =>
-                  updatePrintJobStatus(job.id, 'completed', {
-                    resultMessage: 'Manually marked as completed.',
-                  })
-                }
+                onClick={() => updatePrintJobStatus(job.id, 'completed')}
                 className="rounded-2xl border border-emerald-200 bg-white px-3 py-2 text-[10px] font-black text-emerald-700"
               >
                 Mark Completed
@@ -453,3 +537,127 @@ export function CameraPrintQueuePanel() {
     </section>
   );
 }
+TSX
+
+PRELOAD_FILE="${CORRA_ELECTRON_PRELOAD_FILE:-}"
+if [ -z "$PRELOAD_FILE" ]; then
+  PRELOAD_FILE="$(find apps/desktop-electron -maxdepth 5 -type f \( -name '*.js' -o -name '*.cjs' -o -name '*.ts' \) -print 2>/dev/null | xargs grep -l "corraPrintBridge\\|contextBridge" 2>/dev/null | head -n 1 || true)"
+fi
+
+MAIN_FILE="${CORRA_ELECTRON_MAIN_FILE:-}"
+if [ -z "$MAIN_FILE" ]; then
+  MAIN_FILE="$(find apps/desktop-electron -maxdepth 5 -type f \( -name '*.js' -o -name '*.cjs' -o -name '*.ts' \) -print 2>/dev/null | xargs grep -l "corra:print-image-data-url\\|ipcMain" 2>/dev/null | head -n 1 || true)"
+fi
+
+[ -n "$PRELOAD_FILE" ] && [ -f "$PRELOAD_FILE" ] || {
+  echo "ERROR: Could not find Electron preload file."
+  exit 1
+}
+
+[ -n "$MAIN_FILE" ] && [ -f "$MAIN_FILE" ] || {
+  echo "ERROR: Could not find Electron main file."
+  exit 1
+}
+
+echo "Preload file: $PRELOAD_FILE"
+echo "Main file   : $MAIN_FILE"
+
+python - <<PY
+from pathlib import Path
+
+preload = Path("$PRELOAD_FILE")
+text = preload.read_text()
+
+if "listPrinters" not in text:
+    text = text.replace(
+        "printImageDataUrl: (input) =>\n        electronRuntime.ipcRenderer.invoke('corra:print-image-data-url', input),",
+        "printImageDataUrl: (input) =>\n        electronRuntime.ipcRenderer.invoke('corra:print-image-data-url', input),\n      listPrinters: () =>\n        electronRuntime.ipcRenderer.invoke('corra:list-printers'),",
+    )
+
+preload.write_text(text)
+print("PATCH:", preload)
+PY
+
+python - <<PY
+from pathlib import Path
+
+main = Path("$MAIN_FILE")
+text = main.read_text()
+
+if "corra:list-printers" not in text:
+    text += r'''
+
+// Corra Booth printer list handler
+;(() => {
+  try {
+    const electronRuntime = require('electron');
+
+    if (global.__corraListPrintersHandlerRegistered) {
+      return;
+    }
+
+    global.__corraListPrintersHandlerRegistered = true;
+
+    electronRuntime.ipcMain.handle('corra:list-printers', async (event) => {
+      const ownerWindow =
+        electronRuntime.BrowserWindow.fromWebContents(event.sender) ||
+        electronRuntime.BrowserWindow.getFocusedWindow();
+
+      if (!ownerWindow) {
+        return [];
+      }
+
+      const printers = await ownerWindow.webContents.getPrintersAsync();
+
+      return printers.map((printer) => ({
+        name: printer.name,
+        displayName: printer.displayName,
+        description: printer.description,
+        status: printer.status,
+        isDefault: Boolean(printer.isDefault),
+      }));
+    });
+  } catch (error) {
+    console.error('[corra] failed to register printer list handler', error);
+  }
+})();
+'''
+
+# Patch print handler to use requested printer name if the previous handler exists.
+if "const requestedPrinterName = String(input?.printerName || '');" not in text:
+    text = text.replace(
+        "const templateName = escapeHtml(input?.templateName || 'Corra Booth Print');",
+        "const templateName = escapeHtml(input?.templateName || 'Corra Booth Print');\n        const requestedPrinterName = String(input?.printerName || '');",
+        1,
+    )
+
+if "const selectedPrinter =" not in text:
+    text = text.replace(
+        "const defaultPrinter =\n            printers.find((printer) => printer.isDefault) || printers[0];",
+        "const defaultPrinter =\n            printers.find((printer) => printer.isDefault) || printers[0];\n          const selectedPrinter =\n            printers.find((printer) => printer.name === requestedPrinterName) ||\n            defaultPrinter;",
+        1,
+    )
+
+text = text.replace(
+    "printerName: defaultPrinter?.name,",
+    "printerName: selectedPrinter?.name,",
+    1,
+)
+
+if "deviceName:" not in text:
+    text = text.replace(
+        "copies,\n              },",
+        "copies,\n                ...(selectedPrinter?.name\n                  ? { deviceName: selectedPrinter.name }\n                  : {}),\n              },",
+        1,
+    )
+
+main.write_text(text)
+print("PATCH:", main)
+PY
+
+echo ""
+echo "Relevant lines:"
+grep -R "listPrinters\\|corra:list-printers\\|selectedPrinter\\|printerName" -n "$BRIDGE" "$PANEL" "$PRELOAD_FILE" "$MAIN_FILE" || true
+
+echo ""
+echo "9A3S done."

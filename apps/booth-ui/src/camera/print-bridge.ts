@@ -1,3 +1,11 @@
+export type CameraPrinterInfo = {
+  name: string;
+  displayName?: string;
+  description?: string;
+  status?: number;
+  isDefault?: boolean;
+};
+
 export type CameraPrintBridgeInput = {
   jobId: string;
   dataUrl: string;
@@ -6,6 +14,7 @@ export type CameraPrintBridgeInput = {
   copies: number;
   templateName: string;
   renderMode: string;
+  printerName?: string;
 };
 
 export type CameraPrintBridgeResult = {
@@ -20,6 +29,7 @@ type CorraPrintBridge = {
   printImageDataUrl?: (
     input: CameraPrintBridgeInput,
   ) => Promise<CameraPrintBridgeResult>;
+  listPrinters?: () => Promise<CameraPrinterInfo[]>;
 };
 
 type CorraWindow = Window & {
@@ -39,6 +49,20 @@ export function getCameraPrintBridge(): CorraPrintBridge | null {
 
 export function isCameraPrintBridgeAvailable(): boolean {
   return Boolean(getCameraPrintBridge()?.printImageDataUrl);
+}
+
+export async function listPrintersThroughBridge(): Promise<CameraPrinterInfo[]> {
+  const bridge = getCameraPrintBridge();
+
+  if (!bridge?.listPrinters) {
+    return [];
+  }
+
+  try {
+    return await bridge.listPrinters();
+  } catch {
+    return [];
+  }
 }
 
 export async function printImageThroughBridge(

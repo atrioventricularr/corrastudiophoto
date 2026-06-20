@@ -26,6 +26,7 @@ type CorraWindow = Window & {
   corra?: {
     print?: CorraPrintBridge;
   };
+  corraPrintBridge?: CorraPrintBridge;
 };
 
 export function getCameraPrintBridge(): CorraPrintBridge | null {
@@ -33,7 +34,7 @@ export function getCameraPrintBridge(): CorraPrintBridge | null {
 
   const maybeWindow = window as CorraWindow;
 
-  return maybeWindow.corra?.print || null;
+  return maybeWindow.corra?.print || maybeWindow.corraPrintBridge || null;
 }
 
 export function isCameraPrintBridgeAvailable(): boolean {

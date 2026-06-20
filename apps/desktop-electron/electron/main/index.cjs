@@ -768,3 +768,161 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+// Corra Booth image print handler
+;(() => {
+  try {
+    const electronRuntime = require('electron');
+
+    if (global.__corraPrintImageHandlerRegistered) {
+      return;
+    }
+
+    global.__corraPrintImageHandlerRegistered = true;
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function normalizeCopies(value) {
+      const numberValue = Number(value);
+
+      if (!Number.isFinite(numberValue)) return 1;
+
+      return Math.max(1, Math.min(20, Math.floor(numberValue)));
+    }
+
+    electronRuntime.ipcMain.handle(
+      'corra:print-image-data-url',
+      async (_event, input) => {
+        const jobId = String(input?.jobId || '');
+        const dataUrl = String(input?.dataUrl || '');
+        const widthPx = Number(input?.widthPx || 0);
+        const heightPx = Number(input?.heightPx || 0);
+        const copies = normalizeCopies(input?.copies);
+        const templateName = escapeHtml(input?.templateName || 'Corra Booth Print');
+
+        if (!jobId) {
+          return {
+            ok: false,
+            error: 'Missing print job id.',
+          };
+        }
+
+        if (!dataUrl.startsWith('data:image/')) {
+          return {
+            ok: false,
+            jobId,
+            error: 'Invalid image data URL.',
+          };
+        }
+
+        const printWindow = new electronRuntime.BrowserWindow({
+          width: Math.max(800, widthPx || 800),
+          height: Math.max(600, heightPx || 600),
+          show: false,
+          webPreferences: {
+            sandbox: true,
+            contextIsolation: true,
+            nodeIntegration: false,
+          },
+        });
+
+        const html = `
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${templateName}</title>
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background: white;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+      }
+
+      img {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        object-fit: contain;
+      }
+
+      @page {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <img src="${dataUrl}" alt="${templateName}" />
+  </body>
+</html>`;
+
+        try {
+          await printWindow.loadURL(
+            `data:text/html;charset=utf-8,${encodeURIComponent(html)}`,
+          );
+
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          const printers = await printWindow.webContents.getPrintersAsync();
+          const defaultPrinter =
+            printers.find((printer) => printer.isDefault) || printers[0];
+
+          const result = await new Promise((resolve) => {
+            printWindow.webContents.print(
+              {
+                silent: false,
+                printBackground: true,
+                copies,
+              },
+              (success, failureReason) => {
+                resolve({
+                  ok: success,
+                  jobId,
+                  printerName: defaultPrinter?.name,
+                  message: success
+                    ? `Print dialog sent for ${copies} copy/copies.`
+                    : undefined,
+                  error: success
+                    ? undefined
+                    : failureReason || 'Electron print failed.',
+                });
+              },
+            );
+          });
+
+          return result;
+        } catch (error) {
+          return {
+            ok: false,
+            jobId,
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Unknown Electron print error.',
+          };
+        } finally {
+          if (!printWindow.isDestroyed()) {
+            printWindow.close();
+          }
+        }
+      },
+    );
+  } catch (error) {
+    console.error('[corra] failed to register print handler', error);
+  }
+})();

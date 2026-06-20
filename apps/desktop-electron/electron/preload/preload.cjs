@@ -20,3 +20,17 @@ contextBridge.exposeInMainWorld("corraDesktop", {
     listSecretStatuses: () => ipcRenderer.invoke("corra:vault-list-secret-statuses"),
   },
 });
+
+// Corra Booth print bridge
+;(() => {
+  try {
+    const electronRuntime = require('electron');
+
+    electronRuntime.contextBridge.exposeInMainWorld('corraPrintBridge', {
+      printImageDataUrl: (input) =>
+        electronRuntime.ipcRenderer.invoke('corra:print-image-data-url', input),
+    });
+  } catch (error) {
+    console.error('[corra] failed to expose print bridge', error);
+  }
+})();

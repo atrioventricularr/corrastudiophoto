@@ -5,6 +5,7 @@ import {
   type BoothFlowStep,
 } from './booth-flow-types';
 import { useBoothFlow } from './BoothFlowProvider';
+import { BoothWelcomeStep } from './BoothWelcomeStep';
 
 const stepDescriptions: Record<BoothFlowStep, string> = {
   welcome: 'Customer mulai dari layar sambutan sebelum masuk ke pembayaran.',
@@ -90,14 +91,7 @@ export function BoothCustomerScreen() {
             Current Customer Screen
           </p>
 
-          {currentStep === 'welcome' && (
-            <div className="mt-4">
-              <h4 className="text-4xl font-black">Welcome to Corra Booth</h4>
-              <p className="mt-2 text-sm font-semibold text-white/70">
-                Tap start untuk mulai sesi photobooth.
-              </p>
-            </div>
-          )}
+          {currentStep === 'welcome' && <BoothWelcomeStep />}
 
           {currentStep === 'payment' && (
             <div className="mt-4">

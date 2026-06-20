@@ -1,3 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "========================================"
+echo " Phase 9A3L - Auto Render On Complete"
+echo "========================================"
+
+FILE="apps/booth-ui/src/camera/CameraCapturedRenderPanel.tsx"
+
+[ -f "$FILE" ] || {
+  echo "ERROR: $FILE not found. Run 9A3I first."
+  exit 1
+}
+
+cat > "$FILE" <<'TSX'
 import React, {
   useEffect,
   useMemo,
@@ -300,3 +315,11 @@ export function CameraCapturedRenderPanel() {
     </section>
   );
 }
+TSX
+
+echo ""
+echo "Relevant lines:"
+grep -n "autoRenderOnComplete\\|Auto-render\\|handleRender('auto'\\|lastAutoRenderKey" "$FILE" || true
+
+echo ""
+echo "9A3L done."

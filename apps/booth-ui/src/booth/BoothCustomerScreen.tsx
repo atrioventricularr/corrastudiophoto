@@ -1,0 +1,192 @@
+import React from 'react';
+import {
+  boothFlowStepLabels,
+  boothFlowSteps,
+  type BoothFlowStep,
+} from './booth-flow-types';
+import { useBoothFlow } from './BoothFlowProvider';
+
+const stepDescriptions: Record<BoothFlowStep, string> = {
+  welcome: 'Customer mulai dari layar sambutan sebelum masuk ke pembayaran.',
+  payment: 'Customer menyelesaikan payment gate sebelum camera dibuka.',
+  camera: 'Customer melakukan countdown capture sesuai layout aktif.',
+  review: 'Customer melihat hasil render final dan bisa retake jika perlu.',
+  delivery: 'Customer memilih print / download / QR delivery.',
+  complete: 'Session selesai dan booth siap di-reset untuk customer berikutnya.',
+};
+
+export function BoothCustomerScreen() {
+  const {
+    session,
+    currentStep,
+    currentStepIndex,
+    isFirstStep,
+    isLastStep,
+    startSession,
+    setStep,
+    goNext,
+    goBack,
+    completeSession,
+    resetSession,
+  } = useBoothFlow();
+
+  const progressPercent =
+    ((currentStepIndex + 1) / boothFlowSteps.length) * 100;
+
+  return (
+    <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-950 text-white shadow-sm">
+      <div className="bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.35),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.25),transparent_35%)] p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-white/50">
+              Customer Booth Mode
+            </p>
+            <h3 className="mt-3 text-3xl font-black">
+              {boothFlowStepLabels[currentStep]}
+            </h3>
+            <p className="mt-2 max-w-2xl text-sm font-semibold text-white/70">
+              {stepDescriptions[currentStep]}
+            </p>
+          </div>
+
+          <span className="rounded-full bg-white px-4 py-2 text-xs font-black text-slate-950">
+            {session ? 'Session Active' : 'No Session'}
+          </span>
+        </div>
+
+        <div className="mt-6 h-3 overflow-hidden rounded-full bg-white/15">
+          <div
+            className="h-full rounded-full bg-white"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-6">
+          {boothFlowSteps.map((step, index) => {
+            const isActive = step === currentStep;
+            const isDone = index < currentStepIndex;
+
+            return (
+              <button
+                key={step}
+                type="button"
+                onClick={() => setStep(step)}
+                className={`rounded-2xl px-3 py-3 text-xs font-black ${
+                  isActive
+                    ? 'bg-white text-slate-950'
+                    : isDone
+                      ? 'bg-emerald-400/90 text-slate-950'
+                      : 'bg-white/10 text-white/70'
+                }`}
+              >
+                {index + 1}. {boothFlowStepLabels[step]}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-6 rounded-3xl bg-white/10 p-5">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-white/50">
+            Current Customer Screen
+          </p>
+
+          {currentStep === 'welcome' && (
+            <div className="mt-4">
+              <h4 className="text-4xl font-black">Welcome to Corra Booth</h4>
+              <p className="mt-2 text-sm font-semibold text-white/70">
+                Tap start untuk mulai sesi photobooth.
+              </p>
+            </div>
+          )}
+
+          {currentStep === 'payment' && (
+            <div className="mt-4">
+              <h4 className="text-4xl font-black">Complete Payment</h4>
+              <p className="mt-2 text-sm font-semibold text-white/70">
+                Payment gate nanti disambungkan ke PaymentTransactionProvider.
+              </p>
+            </div>
+          )}
+
+          {currentStep === 'camera' && (
+            <div className="mt-4">
+              <h4 className="text-4xl font-black">Get Ready</h4>
+              <p className="mt-2 text-sm font-semibold text-white/70">
+                Camera full-screen customer capture akan ditempel di phase berikutnya.
+              </p>
+            </div>
+          )}
+
+          {currentStep === 'review' && (
+            <div className="mt-4">
+              <h4 className="text-4xl font-black">Review Your Photo</h4>
+              <p className="mt-2 text-sm font-semibold text-white/70">
+                Hasil final render akan tampil di sini.
+              </p>
+            </div>
+          )}
+
+          {currentStep === 'delivery' && (
+            <div className="mt-4">
+              <h4 className="text-4xl font-black">Print or Download</h4>
+              <p className="mt-2 text-sm font-semibold text-white/70">
+                Customer bisa pilih print atau delivery QR.
+              </p>
+            </div>
+          )}
+
+          {currentStep === 'complete' && (
+            <div className="mt-4">
+              <h4 className="text-4xl font-black">Thank You!</h4>
+              <p className="mt-2 text-sm font-semibold text-white/70">
+                Session selesai. Booth siap reset ke welcome screen.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-4">
+          <button
+            type="button"
+            onClick={session ? resetSession : startSession}
+            className="rounded-2xl bg-white px-4 py-3 text-xs font-black text-slate-950"
+          >
+            {session ? 'Reset Session' : 'Start Session'}
+          </button>
+
+          <button
+            type="button"
+            onClick={goBack}
+            disabled={isFirstStep}
+            className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-xs font-black text-white disabled:opacity-40"
+          >
+            Back
+          </button>
+
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={isLastStep}
+            className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-xs font-black text-white disabled:opacity-40"
+          >
+            Next
+          </button>
+
+          <button
+            type="button"
+            onClick={completeSession}
+            className="rounded-2xl bg-emerald-400 px-4 py-3 text-xs font-black text-slate-950"
+          >
+            Complete
+          </button>
+        </div>
+
+        {session && (
+          <div className="mt-4 rounded-2xl bg-black/20 p-3 font-mono text-[11px] font-bold text-white/60">
+            Session ID: {session.id}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

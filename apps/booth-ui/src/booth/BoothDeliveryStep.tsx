@@ -6,6 +6,7 @@ import {
   useCameraRenderOutput,
 } from '../camera';
 import { useBoothFlow } from './BoothFlowProvider';
+import { useBoothLifecycleLogger } from './BoothLifecycleLoggerProvider';
 
 function downloadDataUrl(input: {
   dataUrl: string;
@@ -26,7 +27,7 @@ function downloadDataUrl(input: {
 }
 
 export function BoothDeliveryStep() {
-  const { setStep, completeSession } = useBoothFlow();
+  const { session, setStep, completeSession } = useBoothFlow();
   const {
     selectedOutput,
     printCandidateOutput,
@@ -43,6 +44,8 @@ export function BoothDeliveryStep() {
   const [isPrinting, setIsPrinting] = useState(false);
   const [message, setMessage] = useState('');
 
+  const { recordBoothEvent } = useBoothLifecycleLogger();
+
   const bridgeAvailable = isCameraPrintBridgeAvailable();
   const outputForDelivery = printCandidateOutput || selectedOutput;
 
@@ -53,6 +56,18 @@ export function BoothDeliveryStep() {
       dataUrl: outputForDelivery.dataUrl,
       templateName: outputForDelivery.templateName,
       renderMode: outputForDelivery.renderMode,
+    });
+
+    recordBoothEvent({
+      type: 'download_final_output',
+      summary: 'Customer downloaded final output.',
+      sessionId: session?.id,
+      step: 'delivery',
+      payload: {
+        outputId: outputForDelivery.id,
+        templateName: outputForDelivery.templateName,
+        renderMode: outputForDelivery.renderMode,
+      },
     });
 
     setMessage('Final output downloaded.');

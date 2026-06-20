@@ -14,6 +14,7 @@ import { BoothStepErrorBoundary } from './BoothStepErrorBoundary';
 import { BoothStepGuard } from './BoothStepGuard';
 import { BoothWelcomeStep } from './BoothWelcomeStep';
 import { useBoothFlow } from './BoothFlowProvider';
+import { BoothLocalAssetsPanel } from './BoothLocalAssetsPanel';
 
 type BoothCustomerScreenProps = {
   showDevNavigation?: boolean;
@@ -194,6 +195,10 @@ export function BoothCustomerScreen({
 
             <div className="mt-4">
               <BoothLifecycleDebugPanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothLocalAssetsPanel />
             </div>
           </div>
         )}

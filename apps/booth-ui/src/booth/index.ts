@@ -18,3 +18,8 @@ export * from './BoothLifecycleAutoTracker';
 export * from './BoothLifecycleDebugPanel';
 export * from './BoothStepGuard';
 export * from './BoothStepErrorBoundary';
+export * from './booth-local-asset-types';
+export * from './booth-local-assets-db';
+export * from './BoothLocalAssetProvider';
+export * from './BoothLocalAssetAutoSaver';
+export * from './BoothLocalAssetsPanel';

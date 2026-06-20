@@ -31,8 +31,11 @@ type SaveCameraRenderOutputInput = Omit<
 
 type CameraRenderOutputContextValue = {
   latestOutput: CameraRenderOutput | null;
+  selectedOutput: CameraRenderOutput | null;
+  selectedOutputId: string;
   outputHistory: CameraRenderOutput[];
   saveRenderOutput: (input: SaveCameraRenderOutputInput) => CameraRenderOutput;
+  selectRenderOutput: (outputId: string) => void;
   clearRenderOutputs: () => void;
 };
 
@@ -47,6 +50,7 @@ export function CameraRenderOutputProvider({
   children,
 }: CameraRenderOutputProviderProps) {
   const [outputHistory, setOutputHistory] = useState<CameraRenderOutput[]>([]);
+  const [selectedOutputId, setSelectedOutputId] = useState('');
 
   const saveRenderOutput = useCallback(
     (input: SaveCameraRenderOutputInput): CameraRenderOutput => {
@@ -57,29 +61,44 @@ export function CameraRenderOutputProvider({
       };
 
       setOutputHistory((current) => [output, ...current].slice(0, 10));
+      setSelectedOutputId(output.id);
 
       return output;
     },
     [],
   );
 
+  const selectRenderOutput = useCallback((outputId: string) => {
+    setSelectedOutputId(outputId);
+  }, []);
+
   const clearRenderOutputs = useCallback(() => {
     setOutputHistory([]);
+    setSelectedOutputId('');
   }, []);
 
   const latestOutput = outputHistory[0] || null;
 
+  const selectedOutput =
+    outputHistory.find((output) => output.id === selectedOutputId) ||
+    latestOutput;
+
   const value = useMemo<CameraRenderOutputContextValue>(() => {
     return {
       latestOutput,
+      selectedOutput,
+      selectedOutputId: selectedOutput?.id || '',
       outputHistory,
       saveRenderOutput,
+      selectRenderOutput,
       clearRenderOutputs,
     };
   }, [
     latestOutput,
+    selectedOutput,
     outputHistory,
     saveRenderOutput,
+    selectRenderOutput,
     clearRenderOutputs,
   ]);
 

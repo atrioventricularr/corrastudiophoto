@@ -13,6 +13,7 @@ import {
 import { useTemplates } from '../templates';
 import { getCaptureCompletionStatus } from './capture-completion';
 import { useCapturedFrames } from './CapturedFramesProvider';
+import { useCameraRenderOutput } from './CameraRenderOutputProvider';
 
 type CameraRenderMode = 'raw' | 'print-ready';
 
@@ -21,6 +22,7 @@ export function CameraCapturedRenderPanel() {
   const { activeTemplate } = useTemplates();
   const { printerProfile } = usePrinterProfile();
   const { photosBySlotId, capturedFramesBySlotId } = useCapturedFrames();
+  const { saveRenderOutput } = useCameraRenderOutput();
 
   const [renderMode, setRenderMode] = useState<CameraRenderMode>('print-ready');
   const [previewUrl, setPreviewUrl] = useState('');
@@ -95,6 +97,21 @@ export function CameraCapturedRenderPanel() {
           renderMode === 'print-ready' ? 'print-ready' : 'raw'
         } PNG${source === 'auto' ? ' · auto-rendered' : ''}`,
       );
+
+      saveRenderOutput({
+        dataUrl: result.dataUrl,
+        widthPx: result.widthPx,
+        heightPx: result.heightPx,
+        renderMode,
+        templateId: activeTemplate.id,
+        templateName: activeTemplate.name,
+        layoutId: renderLayout.id,
+        layoutName: renderLayout.name,
+        mirrorFinalOutput: guideSettings.mirrorFinalOutput,
+        capturedSlotCount: capturedCount,
+        totalSlotCount: renderLayout.slots.length,
+        source,
+      });
 
       if (source === 'auto') {
         setLastAutoRenderKey(renderKey);

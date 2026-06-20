@@ -11,3 +11,5 @@ export * from './CapturedFramesPanel';
 export * from './CameraCapturedRenderPanel';
 export * from './capture-completion';
 export * from './CameraCaptureCompletionPanel';
+export * from './CameraRenderOutputProvider';
+export * from './CameraRenderOutputPanel';

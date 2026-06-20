@@ -6,6 +6,7 @@ import {
 } from './booth-flow-types';
 import { useBoothFlow } from './BoothFlowProvider';
 import { BoothWelcomeStep } from './BoothWelcomeStep';
+import { BoothPaymentStep } from './BoothPaymentStep';
 
 const stepDescriptions: Record<BoothFlowStep, string> = {
   welcome: 'Customer mulai dari layar sambutan sebelum masuk ke pembayaran.',
@@ -93,14 +94,7 @@ export function BoothCustomerScreen() {
 
           {currentStep === 'welcome' && <BoothWelcomeStep />}
 
-          {currentStep === 'payment' && (
-            <div className="mt-4">
-              <h4 className="text-4xl font-black">Complete Payment</h4>
-              <p className="mt-2 text-sm font-semibold text-white/70">
-                Payment gate nanti disambungkan ke PaymentTransactionProvider.
-              </p>
-            </div>
-          )}
+          {currentStep === 'payment' && <BoothPaymentStep />}
 
           {currentStep === 'camera' && (
             <div className="mt-4">

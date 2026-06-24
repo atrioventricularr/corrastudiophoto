@@ -1,15 +1,22 @@
-// Safe payment barrel exports.
-// This file intentionally exports only modules that exist in this project.
+// Payment barrel exports.
+// Keep legacy payment exports + Phase 9D real payment exports here.
 
-export * from './payment-compat-types';
+export * from './payment-settings-types';
 export * from './PaymentSettingsProvider';
+export * from './payment-transaction-types';
 export * from './PaymentTransactionProvider';
+
 export * from './doku-qris-api';
 export * from './doku-status-api';
 export * from './payment-status-api';
+
+export * from './payment-sync-types';
 export * from './supabase-payment-sync';
+
 export * from './real-payment-types';
 export * from './real-payment-storage';
 export * from './real-payment-api';
+export * from './mayar-checkout-api';
+export * from './mayar-status-api';
 export * from './RealPaymentRuntimePanel';
 export * from './PaymentProviderDiagnosticsPanel';

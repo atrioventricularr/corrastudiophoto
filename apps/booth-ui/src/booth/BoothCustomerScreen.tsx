@@ -17,6 +17,10 @@ import { useBoothFlow } from './BoothFlowProvider';
 import { BoothLocalAssetsPanel } from './BoothLocalAssetsPanel';
 import { BoothCloudUploadPanel } from './BoothCloudUploadPanel';
 import { BoothCloudUploadHealthPanel } from './BoothCloudUploadHealthPanel';
+import { PaymentProviderDiagnosticsPanel, RealPaymentRuntimePanel } from '../payments';
+import { BoothDiskPersistencePanel } from './BoothDiskPersistencePanel';
+import { BoothDiskBrowserPanel } from './BoothDiskBrowserPanel';
+import { BoothDiskRetentionPanel } from './BoothDiskRetentionPanel';
 
 type BoothCustomerScreenProps = {
   showDevNavigation?: boolean;
@@ -200,7 +204,27 @@ export function BoothCustomerScreen({
             </div>
 
             <div className="mt-4">
+              <PaymentProviderDiagnosticsPanel />
+            </div>
+
+            <div className="mt-4">
+              <RealPaymentRuntimePanel sessionId={session?.id} />
+            </div>
+
+            <div className="mt-4">
               <BoothLocalAssetsPanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothDiskPersistencePanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothDiskBrowserPanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothDiskRetentionPanel />
             </div>
 
             <div className="mt-4">

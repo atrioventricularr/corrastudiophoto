@@ -7,6 +7,7 @@ import {
 } from '../camera';
 import { useBoothFlow } from './BoothFlowProvider';
 import { useBoothLifecycleLogger } from './BoothLifecycleLoggerProvider';
+import { BoothDeliveryDiskPanel } from './BoothDeliveryDiskPanel';
 
 function downloadDataUrl(input: {
   dataUrl: string;
@@ -319,6 +320,10 @@ export function BoothDeliveryStep() {
           </div>
         )}
       </aside>
+
+      <div className="xl:col-span-2">
+        <BoothDeliveryDiskPanel />
+      </div>
     </div>
   );
 }

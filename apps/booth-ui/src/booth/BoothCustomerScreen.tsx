@@ -26,6 +26,9 @@ import { BoothPrinterHardwareTestPanel } from './BoothPrinterHardwareTestPanel';
 import { BoothCameraHardwareTestPanel } from './BoothCameraHardwareTestPanel';
 import { BoothKioskHardwareTestPanel } from './BoothKioskHardwareTestPanel';
 import { BoothProductionReadinessPanel } from './BoothProductionReadinessPanel';
+import { BoothReleaseDiagnosticsPanel } from './BoothReleaseDiagnosticsPanel';
+import { BoothReleaseReadinessPanel } from './BoothReleaseReadinessPanel';
+import { BoothReleaseManifestPanel } from './BoothReleaseManifestPanel';
 
 type BoothCustomerScreenProps = {
   showDevNavigation?: boolean;
@@ -238,6 +241,18 @@ export function BoothCustomerScreen({
 
             <div className="mt-4">
               <BoothProductionReadinessPanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothReleaseDiagnosticsPanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothReleaseReadinessPanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothReleaseManifestPanel />
             </div>
 
             <div className="mt-4">

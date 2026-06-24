@@ -55,3 +55,4 @@ export * from './booth-release-diagnostics';
 export * from './BoothReleaseDiagnosticsPanel';
 export * from './BoothReleaseReadinessPanel';
 export * from './BoothReleaseManifestPanel';
+export * from './booth-disk-storage';

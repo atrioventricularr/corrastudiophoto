@@ -15,7 +15,10 @@
     "build:desktop": "pnpm --filter @corra/desktop-electron build",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
-    "clean": "pnpm -r clean"
+    "clean": "pnpm -r clean",
+    "corra:release:build-ui": "bash scripts/build-booth-ui-release.sh",
+    "corra:release:make-rc": "bash scripts/make-corra-release-candidate.sh",
+    "corra:release:check": "bash scripts/check-corra-release-candidate.sh"
   },
   "devDependencies": {
     "supabase": "^2.106.0",

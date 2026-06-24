@@ -21,6 +21,11 @@ import { PaymentProviderDiagnosticsPanel, RealPaymentRuntimePanel } from '../pay
 import { BoothDiskPersistencePanel } from './BoothDiskPersistencePanel';
 import { BoothDiskBrowserPanel } from './BoothDiskBrowserPanel';
 import { BoothDiskRetentionPanel } from './BoothDiskRetentionPanel';
+import { BoothHardwareDiagnosticsPanel } from './BoothHardwareDiagnosticsPanel';
+import { BoothPrinterHardwareTestPanel } from './BoothPrinterHardwareTestPanel';
+import { BoothCameraHardwareTestPanel } from './BoothCameraHardwareTestPanel';
+import { BoothKioskHardwareTestPanel } from './BoothKioskHardwareTestPanel';
+import { BoothProductionReadinessPanel } from './BoothProductionReadinessPanel';
 
 type BoothCustomerScreenProps = {
   showDevNavigation?: boolean;
@@ -213,6 +218,26 @@ export function BoothCustomerScreen({
 
             <div className="mt-4">
               <BoothLocalAssetsPanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothHardwareDiagnosticsPanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothPrinterHardwareTestPanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothCameraHardwareTestPanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothKioskHardwareTestPanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothProductionReadinessPanel />
             </div>
 
             <div className="mt-4">

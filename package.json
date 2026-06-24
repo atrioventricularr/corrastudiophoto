@@ -18,7 +18,15 @@
     "clean": "pnpm -r clean",
     "corra:release:build-ui": "bash scripts/build-booth-ui-release.sh",
     "corra:release:make-rc": "bash scripts/make-corra-release-candidate.sh",
-    "corra:release:check": "bash scripts/check-corra-release-candidate.sh"
+    "corra:release:check": "bash scripts/check-corra-release-candidate.sh",
+    "corra:audit:production": "bash scripts/audit-corra-production.sh",
+    "corra:build:production": "bash scripts/build-corra-production-bundle.sh",
+    "corra:check:production": "bash scripts/check-corra-production-bundle.sh",
+    "corra:phase10:check": "bash scripts/check-phase-10-status.sh",
+    "corra:installer:check": "bash scripts/check-windows-installer-readiness.sh",
+    "corra:installer:build": "bash scripts/build-windows-installer.sh",
+    "corra:installer:output": "bash scripts/check-windows-installer-output.sh",
+    "corra:phase11:check": "bash scripts/check-phase-11-status.sh"
   },
   "devDependencies": {
     "supabase": "^2.106.0",

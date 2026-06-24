@@ -56,3 +56,13 @@ packages/.phase-backups/
 vendor/electron/
 vendor/electron*.zip
 vendor/electron-v*/
+
+# Build artifacts / release outputs
+apps/desktop-electron/dist-installer/
+apps/desktop-electron/booth-ui-dist/
+apps/booth-ui/dist/
+release/
+*.exe
+*.msi
+*.blockmap
+*.zip

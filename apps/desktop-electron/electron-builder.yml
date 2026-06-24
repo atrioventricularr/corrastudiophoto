@@ -1,15 +1,35 @@
-appId: com.corrabooth.desktop
+appId: com.corrastudio.photobooth
 productName: Corra Booth
 directories:
-  output: release
+  output: dist-installer
+  buildResources: resources
 files:
-  - dist/**
-  - resources/**
+  - main.cjs
+  - index.cjs
+  - preload.cjs
+  - package.json
+  - corra-disk-persistence.cjs
+  - corra-disk-preload.cjs
+  - corra-hardware-diagnostics.cjs
+  - corra-hardware-preload.cjs
+  - resources/**/*
+  - booth-ui-dist/**/*
+extraMetadata:
+  main: main.cjs
 win:
   target:
-    - nsis
-  icon: resources/app-icon.ico
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  artifactName: Corra-Booth-${version}-${arch}.${ext}
 nsis:
   oneClick: false
+  perMachine: false
   allowToChangeInstallationDirectory: true
-
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Corra Booth
+publish: null

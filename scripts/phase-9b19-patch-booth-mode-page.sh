@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cat > apps/booth-ui/src/booth/BoothModePage.tsx <<'TSX'
 import React from 'react';
 import { BoothCustomerScreen } from './BoothCustomerScreen';
 import { BoothKioskStatusPanel } from './BoothKioskStatusPanel';
@@ -8,7 +12,6 @@ import {
   goToAdminMode,
 } from './booth-mode-utils';
 import { useBoothKioskSafety } from './useBoothKioskSafety';
-import { BoothKioskAdminUnlock } from './BoothKioskAdminUnlock';
 
 export function BoothModePage() {
   const { isDevMode, isKioskMode } = getBoothUrlMode();
@@ -114,8 +117,9 @@ export function BoothModePage() {
           />
         </BoothRuntimeProviders>
       </div>
-
-      <BoothKioskAdminUnlock enabled={isKioskMode && !isDevMode} />
     </main>
   );
 }
+TSX
+
+echo "BoothModePage patched with kiosk safety."

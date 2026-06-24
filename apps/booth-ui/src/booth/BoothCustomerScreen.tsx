@@ -15,6 +15,7 @@ import { BoothStepGuard } from './BoothStepGuard';
 import { BoothWelcomeStep } from './BoothWelcomeStep';
 import { useBoothFlow } from './BoothFlowProvider';
 import { BoothLocalAssetsPanel } from './BoothLocalAssetsPanel';
+import { BoothCloudUploadPanel } from './BoothCloudUploadPanel';
 
 type BoothCustomerScreenProps = {
   showDevNavigation?: boolean;
@@ -199,6 +200,10 @@ export function BoothCustomerScreen({
 
             <div className="mt-4">
               <BoothLocalAssetsPanel />
+            </div>
+
+            <div className="mt-4">
+              <BoothCloudUploadPanel />
             </div>
           </div>
         )}
